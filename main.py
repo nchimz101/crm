@@ -20,7 +20,7 @@ fake = Faker()
 
 # Set page configuration
 st.set_page_config(
-    page_title="NetaGrow Zambia CRM",
+    page_title="Netagrow CRM",
     page_icon="🌱",
     layout="wide",
     initial_sidebar_state="expanded"
@@ -404,7 +404,7 @@ def generate_forecast_data(historical_data, labels, periods_ahead=3):
     
     return forecast, forecast_labels
 
-# Update the generate_recent_activities function with Zambian names and companies
+# Fix the generate_recent_activities function to handle all placeholders properly
 def generate_recent_activities(count=10):
     """Generate realistic Zambian activities for demo purposes"""
     zambian_names = [
@@ -433,47 +433,73 @@ def generate_recent_activities(count=10):
         "Farm Mechanization Drive", "Sustainable Farming Practices", "Crop Diversification"
     ]
     
-    activity_types = [
-        "Added new contact: {name}",
-        "Updated deal with {company}",
-        "Scheduled meeting with {name} at {company}",
-        "Sent proposal to {name} from {company}",
-        "Received payment from {company}",
-        "Created task: {task} for {company}",
-        "Completed task: {task} for {name}",
-        "Added note to {name}'s profile",
-        "Modified campaign: {campaign}",
-        "Created support ticket for {company}"
+    # Define different activity types with their respective required variables
+    activity_groups = [
+        {
+            "templates": [
+                "Added new contact: {name}",
+                "Added note to {name}'s profile"
+            ],
+            "requires": ["name"]
+        },
+        {
+            "templates": [
+                "Updated deal with {company}",
+                "Received payment from {company}",
+                "Created support ticket for {company}"
+            ],
+            "requires": ["company"]
+        },
+        {
+            "templates": [
+                "Scheduled meeting with {name} at {company}",
+                "Sent proposal to {name} from {company}"
+            ],
+            "requires": ["name", "company"]
+        },
+        {
+            "templates": [
+                "Created task: {task} for {company}",
+            ],
+            "requires": ["task", "company"]
+        },
+        {
+            "templates": [
+                "Completed task: {task} for {name}",
+            ],
+            "requires": ["task", "name"]
+        },
+        {
+            "templates": [
+                "Modified campaign: {campaign}",
+            ],
+            "requires": ["campaign"]
+        }
     ]
     
     activities = []
     now = datetime.now()
     
     for i in range(count):
-        activity_type = random.choice(activity_types)
+        # Select a random activity group
+        group = random.choice(activity_groups)
+        # Select a random activity template from this group
+        template = random.choice(group["templates"])
         timestamp = now - timedelta(hours=random.randint(1, 72))
         
-        name = random.choice(zambian_names)
-        company = random.choice(zambian_companies)
-        task = random.choice(zambian_tasks)
-        campaign = random.choice(zambian_campaigns)
+        # Prepare the parameters for string formatting based on what's required
+        params = {}
+        if "name" in group["requires"]:
+            params["name"] = random.choice(zambian_names)
+        if "company" in group["requires"]:
+            params["company"] = random.choice(zambian_companies)
+        if "task" in group["requires"]:
+            params["task"] = random.choice(zambian_tasks)
+        if "campaign" in group["requires"]:
+            params["campaign"] = random.choice(zambian_campaigns)
         
-        if "{name}" in activity_type and "{company}" in activity_type:
-            activity = activity_type.format(name=name, company=company)
-        elif "{name}" in activity_type:
-            activity = activity_type.format(name=name)
-        elif "{company}" in activity_type:
-            activity = activity_type.format(company=company)
-        elif "{task}" in activity_type and "{company}" in activity_type:
-            activity = activity_type.format(task=task, company=company)
-        elif "{task}" in activity_type and "{name}" in activity_type:
-            activity = activity_type.format(task=task, name=name)
-        elif "{task}" in activity_type:
-            activity = activity_type.format(task=task)
-        elif "{campaign}" in activity_type:
-            activity = activity_type.format(campaign=campaign)
-        else:
-            activity = activity_type
+        # Format the activity text with the parameters
+        activity = template.format(**params)
         
         user = random.choice(["Chongo M.", "Mwape L.", "Kapembwa J.", "Nanyangwe T."])
         
@@ -490,12 +516,12 @@ def generate_recent_activities(count=10):
     return activities
 
 def get_time_ago(timestamp):
-    """Convert timestamp to human-readable time ago string"""
+    """Convert timestamp to human-readable time ago string without 'd ago' for days"""
     now = datetime.now()
     delta = now - timestamp
     
     if delta.days > 0:
-        return f"{delta.days}d ago"
+        return f"{delta.days}d" # Removed "ago"
     elif delta.seconds >= 3600:
         return f"{delta.seconds // 3600}h ago"
     elif delta.seconds >= 60:
@@ -503,8 +529,8 @@ def get_time_ago(timestamp):
     else:
         return "Just now"
 
-# Update the get_upcoming_tasks_events function to generate stronger Zambian context
-def get_upcoming_tasks_events(data, days=30):
+# Update the get_upcoming_tasks_events function to generate fewer, more spread-out events
+def get_upcoming_tasks_events(data, days=60):  # Increased days range for better spread
     """Generate upcoming tasks and events with strong Zambian context"""
     upcoming = []
     now = datetime.now()
@@ -527,54 +553,37 @@ def get_upcoming_tasks_events(data, days=30):
     # Zambian-specific contexts
     zambian_companies = [
         "Lusaka Agri Solutions", "Copperbelt Farming Ltd", "Luangwa Valley Growers", 
-        "Zambezi Agricultural Services", "Kafue Basin Farms", "Southern Province Cooperative", 
-        "Muchinga Agritech", "Mkushi Farming Block", "Eastern Zambia Producers", 
-        "Northern Agro Dealers", "Kariba Harvest Ltd", "Chongwe Farming Collective",
-        "Zambeef Products", "Zamseed", "Zambia National Farmers Union", "Zambia Sugar",
-        "NWK Agri-Services", "Good Nature Agro", "Seed Co Zambia", "AgriServe Zambia"
+        "Zambezi Agricultural Services", "Kafue Basin Farms", "Southern Province Cooperative"
     ]
     
     zambian_names = [
-        "Mwamba Chilufya", "Nkandu Mulenga", "Chanda Mutale", "Bwalya Musonda", 
-        "Kalumba Tembo", "Mutinta Hichilema", "Mulenga Kapwepwe", "Chilombo Banda", 
-        "Chileshe Bwalya", "Chongo Daka", "Nsofwa Mwale", "Mwila Kanyanta",
-        "Lubinda Haabazoka", "Kasonde Mwenda", "Monde Sitwala", "Namakau Mukelabai",
-        "Changala Siame", "Muyunda Mwangala", "Choolwe Beyani", "Mweetwa Sitali"
+        "Mwamba Chilufya", "Nkandu Mulenga", "Chanda Mutale", "Bwalya Musonda",
+        "Kalumba Tembo", "Mutinta Hichilema"
     ]
     
     zambian_locations = [
-        "Lusaka", "Ndola", "Kitwe", "Livingstone", "Chipata", "Kasama", 
-        "Mongu", "Solwezi", "Kabwe", "Choma", "Mansa", "Monze", "Chingola",
-        "Mpika", "Mumbwa", "Mazabuka", "Kapiri Mposhi", "Kafue", "Siavonga"
+        "Lusaka", "Ndola", "Kitwe", "Livingstone", "Chipata", "Kasama"
     ]
     
     zambian_events = [
         "Meeting with {company} in {location}",
         "Demo for {company} at Agricultural Showgrounds",
-        "Call with {name} about irrigation systems",
-        "Farmer training session in {location}",
-        "NetaGrow demonstration at {location} Expo",
-        "Agricultural Cooperative meeting in {location}",
-        "Equipment installation at {company} in {location}",
-        "Field visit with {name} to {company}",
-        "Stakeholder meeting at Ministry of Agriculture",
-        "NetaSense deployment at {company}'s farms",
-        "Crop monitoring system setup for {company}",
-        "Farmer group training in {location}",
-        "NetaGrow showcase at {location} Agricultural Fair",
-        "Drought mitigation workshop with {company}"
+        "Call with {name} about smart irrigation systems",
+        "Precision farming training in {location}"
     ]
     
-    zambian_staff = ["Chongo M.", "Mwape L.", "Kapembwa J.", "Nanyangwe T.", 
-                    "Lubinda K.", "Mwenya C.", "Kalinda B.", "Nchimunya M."]
+    zambian_staff = ["Chongo M.", "Mwape L.", "Kapembwa J.", "Nanyangwe T."]
     
-    for _ in range(10):
-        event_date = now + timedelta(days=random.randint(1, days))
-        event_type = random.choice(zambian_events)
+    # Create just 4 events spaced apart in time
+    time_intervals = [7, 15, 30, 45]  # Days from now for each event
+    
+    for i, interval in enumerate(time_intervals):
+        event_date = now + timedelta(days=interval)
+        event_type = zambian_events[i % len(zambian_events)]
         
-        name = random.choice(zambian_names)
-        company = random.choice(zambian_companies)
-        location = random.choice(zambian_locations)
+        name = zambian_names[i % len(zambian_names)]
+        company = zambian_companies[i % len(zambian_companies)]
+        location = zambian_locations[i % len(zambian_locations)]
         
         if "{name}" in event_type and "{company}" in event_type and "{location}" in event_type:
             title = event_type.format(name=name, company=company, location=location)
@@ -598,7 +607,7 @@ def get_upcoming_tasks_events(data, days=30):
             "date": event_date,
             "type": "event",
             "status": random.choice(["scheduled", "tentative"]),
-            "assignedTo": random.choice(zambian_staff)
+            "assignedTo": zambian_staff[i % len(zambian_staff)]
         })
     
     # Sort by date
@@ -652,901 +661,980 @@ def generate_win_loss_data():
         "byProduct": by_product,
         "byDealSize": by_deal_size
     }
-o M.", "Mwape L.", "Kapembwa J.", "Nanyangwe T."]
+
 def search_contacts(contacts, query):
     """Search contacts by name, company, or location"""
-    query = query.lower()},
-    results = []ems", "direction": "outbound"},
-    tion": "inbound"},
-    for contact in contacts:und"},
-        if (query in contact["name"].lower() or ound"},
-            query in contact["company"].lower() or d"},
-            query in contact["location"].lower()):on": "outbound"},
-            results.append(contact)   {"type": "email", "subject": "Re: NetaGrow contract details", "direction": "inbound"},
-        {"type": "call", "subject": "Implementation follow-up", "direction": "outbound"}
+    query = query.lower()
+    results = []
+    for contact in contacts:
+        if (query in contact["name"].lower() or 
+            query in contact["company"].lower() or 
+            query in contact["location"].lower()):
+            results.append(contact)
     return results
 
 def filter_contacts_by_location(contacts, location):
     """Filter contacts by location"""
     if location == "All Locations":
-        return contactscomm_type = random.choice(communication_types)
-    edelta(days=random.randint(1, 60))
+        return contacts
     return [c for c in contacts if c["location"] == location]
 
 def generate_communication_history(contact_name):
     """Generate sample communication history for a contact"""
     history = []
     now = datetime.now()
-      "content": fake.paragraph() if comm_type["type"] == "email" else fake.text(max_nb_chars=50),
-    communication_types = [        "user": random.choice(zambian_users)
+    
+    # Define Zambian users
+    zambian_users = ["Chongo M.", "Mwape L.", "Kapembwa J.", "Nanyangwe T."]
+    
+    communication_types = [
         {"type": "email", "subject": "Follow-up on our meeting", "direction": "outbound"},
-        {"type": "email", "subject": "Product information", "direction": "outbound"},
-        {"type": "email", "subject": "Re: Product information", "direction": "inbound"},# Sort by most recent first
-        {"type": "call", "subject": "Sales call", "direction": "outbound"},ey=lambda x: datetime.strptime(x["date"], "%Y-%m-%d"), reverse=True)
-        {"type": "call", "subject": "Support request", "direction": "inbound"},    
-        {"type": "meeting", "subject": "Product demo", "direction": "outbound"},
+        {"type": "email", "subject": "Product information for Netagrow", "direction": "outbound"},
+        {"type": "email", "subject": "Re: Product information", "direction": "inbound"},
+        {"type": "call", "subject": "Sales call about irrigation systems", "direction": "outbound"},
+        {"type": "call", "subject": "Support request", "direction": "inbound"},
+        {"type": "meeting", "subject": "Product demonstration", "direction": "outbound"},
         {"type": "email", "subject": "Contract details", "direction": "outbound"},
-        {"type": "email", "subject": "Re: Contract details", "direction": "inbound"}, data
-        {"type": "call", "subject": "Follow-up call", "direction": "outbound"}a(data):
+        {"type": "email", "subject": "Re: Contract details", "direction": "inbound"},
+        {"type": "call", "subject": "Follow-up call", "direction": "outbound"}
     ]
     
-    # Generate 5-10 communicationsate_forecast_data(
-    num_communications = random.randint(5, 10)ata["revenueData"]["data"],
-    for i in range(num_communications):   data["revenueData"]["labels"],
-        comm_type = random.choice(communication_types)    3
+    # Generate 5-10 communications
+    num_communications = random.randint(5, 10)
+    for i in range(num_communications):
+        comm_type = random.choice(communication_types)
         date = now - timedelta(days=random.randint(1, 60))
         
-        history.append({data["revenueData"]["forecast"] = forecasts
-            "type": comm_type["type"],recastLabels"] = forecast_labels
+        history.append({
+            "type": comm_type["type"],
             "subject": comm_type["subject"],
-            "date": date.strftime("%Y-%m-%d"),# Add recent activities
-            "direction": comm_type["direction"],rate_recent_activities()
+            "date": date.strftime("%Y-%m-%d"),
+            "direction": comm_type["direction"],
             "content": fake.paragraph() if comm_type["type"] == "email" else fake.text(max_nb_chars=50),
-            "user": random.choice(["John D.", "Mary P.", "Alex S.", "Sarah K."])# Add upcoming tasks and events
-        })ing_tasks_events(data)
+            "user": random.choice(zambian_users)
+        })
     
-    # Sort by most recent first# Add enhanced contact data with groups
-    history.sort(key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d"), reverse=True)Suppliers", "Distributors"]
+    # Sort by most recent first
+    history.sort(key=lambda x: datetime.strptime(x["date"], "%Y-%m-%d"), reverse=True)
     
     return history
-    contact["group"] = random.choice(contact_groups)
-# Add to your load_data function or create enhanced datate_communication_history(contact["name"])
+
 def enhance_netagrow_data(data):
     """Add additional data for enhanced features"""
     # Generate forecasts
     forecasts, forecast_labels = generate_forecast_data(
         data["revenueData"]["data"],
-        data["revenueData"]["labels"],   {"name": "Samuel Kapemba", "company": "Northern Technologies", "location": "Northern Province", "email": "*****@outlook.com", "phone": "****5566", "group": "Partners"},
-        3    {"name": "Patricia Mutale", "company": "Luapula Farmers", "location": "Luapula Province", "email": "*****@hotmail.com", "phone": "****7788", "group": "Customers"}
+        data["revenueData"]["labels"],
+        3
     )
     
     data["revenueData"]["forecast"] = forecasts
-    data["revenueData"]["forecastLabels"] = forecast_labels    contact["communicationHistory"] = generate_communication_history(contact["name"])
-    cts"].append(contact)
+    data["revenueData"]["forecastLabels"] = forecast_labels
+    
     # Add recent activities
-    data["recentActivities"] = generate_recent_activities()# Add unique locations for filtering
-    ocations"] = sorted(list(set(c["location"] for c in data["contactManagement"]["contacts"])))
+    data["recentActivities"] = generate_recent_activities()
+    
     # Add upcoming tasks and events
-    data["upcomingTasksEvents"] = get_upcoming_tasks_events(data)# Add sales velocity metrics
-     = generate_sales_velocity_metrics()
+    data["upcomingTasksEvents"] = get_upcoming_tasks_events(data)
+    
     # Add enhanced contact data with groups
-    contact_groups = ["Customers", "Leads", "Partners", "Suppliers", "Distributors"]# Add win/loss analysis data
-    ssAnalysis"] = generate_win_loss_data()
-    for contact in data["contactManagement"]["contacts"]:    
+    contact_groups = ["Customers", "Leads", "Partners", "Suppliers", "Distributors"]
+    
+    for contact in data["contactManagement"]["contacts"]:
         contact["group"] = random.choice(contact_groups)
         contact["communicationHistory"] = generate_communication_history(contact["name"])
     
-    # Add more contacts for better demonstration # Cache data for 1 hour
-    more_contacts = [a():
-        {"name": "Michael Mwanza", "company": "Southern Farms", "location": "Southern Province", "email": "*****@gmail.com", "phone": "****1122", "group": "Customers"},ic data
+    # Add more contacts for better demonstration
+    more_contacts = [
+        {"name": "Michael Mwanza", "company": "Southern Farms", "location": "Southern Province", "email": "*****@gmail.com", "phone": "****1122", "group": "Customers"},
         {"name": "Beatrice Chanda", "company": "Western Agri Ltd", "location": "Western Province", "email": "*****@yahoo.com", "phone": "****3344", "group": "Leads"},
         {"name": "Samuel Kapemba", "company": "Northern Technologies", "location": "Northern Province", "email": "*****@outlook.com", "phone": "****5566", "group": "Partners"},
-        {"name": "Patricia Mutale", "company": "Luapula Farmers", "location": "Luapula Province", "email": "*****@hotmail.com", "phone": "****7788", "group": "Customers"}0,
+        {"name": "Patricia Mutale", "company": "Luapula Farmers", "location": "Luapula Province", "email": "*****@hotmail.com", "phone": "****7788", "group": "Customers"}
     ]
     
-    for contact in more_contacts:45,
-        contact["communicationHistory"] = generate_communication_history(contact["name"])0,
+    for contact in more_contacts:
+        contact["communicationHistory"] = generate_communication_history(contact["name"])
         data["contactManagement"]["contacts"].append(contact)
     
     # Add unique locations for filtering
-    data["contactManagement"]["locations"] = sorted(list(set(c["location"] for c in data["contactManagement"]["contacts"])))   "adoption": 4.1,
-          "tickets": -1.9
+    data["contactManagement"]["locations"] = sorted(list(set(c["location"] for c in data["contactManagement"]["contacts"])))
+    
     # Add sales velocity metrics
     data["salesVelocityMetrics"] = generate_sales_velocity_metrics()
     
-    # Add win/loss analysis dataOct 24', 'Nov 24', 'Dec 24', 'Jan 25', 'Feb 25'],
-    data["winLossAnalysis"] = generate_win_loss_data()250, 12450, 13100, 15200, 16850],
+    # Add win/loss analysis data
+    data["winLossAnalysis"] = generate_win_loss_data()
     
     return data
 
-# Load the data  'Dec 24': 'End of year promotions & increased sign-ups',
-@st.cache_data(ttl=3600)  # Cache data for 1 hour'New device launch & expanded marketing'
+# Update the taskActivityTracking activities to use Zambian names and contexts
+def get_zambian_task_activities():
+    return {
+        "activities": [
+    {"id": 1, "task": "Follow-up call with Copperbelt Farming leads", "status": "Completed", "assignedTo": "Marketing Team", "dueDate": "2025-02-26"},
+    {"id": 2, "task": "Send proposal to Lusaka Agri Solutions", "status": "Pending", "assignedTo": "Management", "dueDate": "2025-02-27"},
+    {"id": 3, "task": "Schedule demo session for Mkushi Farming Block", "status": "In Progress", "assignedTo": "Marketing Team", "dueDate": "2025-02-28"},
+    {"id": 4, "task": "Client onboarding for Kafue Basin Farms", "status": "Scheduled", "assignedTo": "Marketing Team", "dueDate": "2025-03-01"},
+    {"id": 5, "task": "Prepare marketing materials for Agritech Expo", "status": "Completed", "assignedTo": "Marketing Team", "dueDate": "2025-02-22"},
+    {"id": 6, "task": "Conduct training session on Netagrow AI tools", "status": "Completed", "assignedTo": "Marketing Team", "dueDate": "2025-02-15"},
+    {"id": 7, "task": "Update CRM with new farmer registrations", "status": "Completed", "assignedTo": "Marketing Team", "dueDate": "2025-02-12"},
+    {"id": 8, "task": "Host webinar on data-driven farming", "status": "Completed", "assignedTo": "Marketing Team", "dueDate": "2025-02-08"},
+    {"id": 9, "task": "Prepare Q4 performance report", "status": "Completed", "assignedTo": "Management", "dueDate": "2025-01-30"},
+    {"id": 10, "task": "Follow up on partnership discussions with AgriBank", "status": "Completed", "assignedTo": "Management", "dueDate": "2025-01-28"},
+    {"id": 11, "task": "Deploy software update for Netagrow App", "status": "Completed", "assignedTo": "Developers", "dueDate": "2025-01-25"},
+    {"id": 12, "task": "Test Netagrow Device in real farm conditions", "status": "Completed", "assignedTo": "Developers", "dueDate": "2025-01-20"},
+    {"id": 13, "task": "Send promotional emails for subscription discount", "status": "Completed", "assignedTo": "Marketing Team", "dueDate": "2025-01-18"},
+    {"id": 14, "task": "Plan content calendar for Q1 2025", "status": "Completed", "assignedTo": "Marketing Team", "dueDate": "2025-01-12"},
+    {"id": 15, "task": "Review customer feedback and implement improvements", "status": "Completed", "assignedTo": "Management", "dueDate": "2025-01-05"},
+    {"id": 16, "task": "Launch social media campaign on smart farming", "status": "Completed", "assignedTo": "Marketing Team", "dueDate": "2024-12-30"},
+    {"id": 17, "task": "Host live Q&A session for Netagrow App users", "status": "Completed", "assignedTo": "Marketing Team", "dueDate": "2024-12-22"},
+    {"id": 18, "task": "Develop video tutorials on AI-powered crop analysis", "status": "Completed", "assignedTo": "Marketing Team", "dueDate": "2024-12-10"},
+    {"id": 19, "task": "Analyze market data for expansion strategy", "status": "Completed", "assignedTo": "Management", "dueDate": "2024-12-05"},
+    {"id": 20, "task": "Optimize AI models for predictive crop analysis", "status": "Completed", "assignedTo": "Developers", "dueDate": "2024-11-20"},
+    {"id": 21, "task": "Secure MOUs with three major agro-cooperatives", "status": "Completed", "assignedTo": "Management", "dueDate": "2024-11-15"},
+    {"id": 22, "task": "Pilot test Netagrow Device with 50 farmers", "status": "Completed", "assignedTo": "Developers", "dueDate": "2024-11-10"}
+]
+    }
+
+# Update load_data function to include these Zambian tasks
+@st.cache_data(ttl=3600)  # Cache data for 1 hour
 def load_data():
     # Load the basic data
-    data = {: 68,
-        "stats": {   "farmAssist": 28,
-            "totalFarmers": 1350,      "netaSense": 4
+    data = {
+        "stats": {
+            "totalFarmers": 1350,
             "activeUsers": 900,
             "totalDevices": 42,
             "deviceAdoption": 45,
-            "supportTickets": 20,ation', 'Closed Won', 'Closed Lost'],
+            "supportTickets": 20,
             "monthlyGrowth": {
-                "farmers": 5.8,  "dealValues": [60000, 42000, 31000, 22000, 16000, 7000],
-                "revenue": 8.2,rsionRates": [75, 58, 67, 48, 36, 14]
+                "farmers": 5.8,
+                "revenue": 8.2,
                 "adoption": 4.1,
                 "tickets": -1.9
-            }  "sources": ['Referrals', 'Social Media', 'Events', 'Website', 'Cold Calls'],
-        },, 25, 15, 10, 5]
+            }
+        },
         "revenueData": {
             "labels": ['Sep 24', 'Oct 24', 'Nov 24', 'Dec 24', 'Jan 25', 'Feb 25'],
             "data": [9800, 11250, 12450, 13100, 15200, 16850],
             "totalRevenue": 68650,
             "monthlyNotes": {
-                'Nov 24': 'Agricultural show boost',   {"name": "David Tembo", "company": "Central AgriSolutions", "location": "Central", "email": "*****@hotmail.com", "phone": "****9876"},
-                'Dec 24': 'End of year promotions & increased sign-ups',      {"name": "Chileshe Banda", "company": "GreenTech Solutions", "location": "Copperbelt", "email": "*****@outlook.com", "phone": "****5567"}
+                'Nov 24': 'Agricultural show boost',
+                'Dec 24': 'End of year promotions & increased sign-ups',
                 'Feb 25': 'New device launch & expanded marketing'
             },
             "breakdown": {
                 "netaBusiness": 68,
-                "farmAssist": 28,,
-                "netaSense": 4,
-            }   {"id": 3, "task": "Schedule demo session", "status": "In Progress", "assignedTo": "Sales Rep 3", "dueDate": "2025-02-28"},
-        },      {"id": 4, "task": "Client onboarding session", "status": "Scheduled", "assignedTo": "Sales Rep 4", "dueDate": "2025-03-01"}
+                "farmAssist": 28,
+                "netaSense": 4
+            }
+        },
         "salesPipeline": {
             "stages": ['Lead', 'Qualified', 'Proposal Sent', 'Negotiation', 'Closed Won', 'Closed Lost'],
             "dealCounts": [60, 40, 30, 22, 15, 7],
             "dealValues": [60000, 42000, 31000, 22000, 16000, 7000],
-            "conversionRates": [75, 58, 67, 48, 36, 14]e": 5800,
+            "conversionRates": [75, 58, 67, 48, 36, 14]
         },
-        "leads": {   "engagementRate": 81,
-            "sources": ['Referrals', 'Social Media', 'Events', 'Website', 'Cold Calls'],      "satisfactionScore": 94
+        "leads": {
+            "sources": ['Referrals', 'Social Media', 'Events', 'Website', 'Cold Calls'],
             "percentages": [45, 25, 15, 10, 5]
         },
         "contactManagement": {
             "contacts": [
-                {"name": "John Mulenga", "company": "Mwamba Farms", "location": "Eastern Province", "email": "*****@gmail.com", "phone": "****6789"},rs"},
-                {"name": "Mary Phiri", "company": "Lusaka Agritech", "location": "Lusaka", "email": "*****@yahoo.com", "phone": "****2345"},
-                {"name": "David Tembo", "company": "Central AgriSolutions", "location": "Central", "email": "*****@hotmail.com", "phone": "****9876"},
-                {"name": "Chileshe Banda", "company": "GreenTech Solutions", "location": "Copperbelt", "email": "*****@outlook.com", "phone": "****5567"}   {"name": "AgriTech Demo Sessions", "status": "Upcoming", "targetAudience": "Potential Partners"},
-            ]       {"name": "Email Outreach to Businesses", "status": "Planned", "targetAudience": "Agribusiness Enterprises"}
-        },       ]
-        "taskActivityTracking": {    }
-            "activities": [
-                {"id": 1, "task": "Follow-up call with lead", "status": "Completed", "assignedTo": "Sales Rep 1", "dueDate": "2025-02-26"},
-                {"id": 2, "task": "Send proposal to new client", "status": "Pending", "assignedTo": "Sales Rep 2", "dueDate": "2025-02-27"},# Add enhanced data
-                {"id": 3, "task": "Schedule demo session", "status": "In Progress", "assignedTo": "Sales Rep 3", "dueDate": "2025-02-28"},nce_netagrow_data(data)
-                {"id": 4, "task": "Client onboarding session", "status": "Scheduled", "assignedTo": "Sales Rep 4", "dueDate": "2025-03-01"}    
-            ]
+    {"name": "John Mulenga", "company": "Mwamba Farms", "location": "Eastern Province", "email": "****@gmail.com", "phone": "****3456"},
+    {"name": "Mary Phiri", "company": "Lusaka Agritech", "location": "Lusaka", "email": "****@yahoo.com", "phone": "****4567"},
+    {"name": "David Tembo", "company": "Central AgriSolutions", "location": "Central", "email": "****@hotmail.com", "phone": "****7654"},
+    {"name": "Chileshe Banda", "company": "GreenTech Solutions", "location": "Copperbelt", "email": "****@outlook.com", "phone": "****6789"},
+    {"name": "Grace Mwanza", "company": "Southern Harvest", "location": "Southern Province", "email": "****@gmail.com", "phone": "****3456"},
+    {"name": "Peter Chilufya", "company": "Northwest Agro", "location": "North-Western Province", "email": "****@yahoo.com", "phone": "****4567"},
+    {"name": "Amanda Mumba", "company": "Luapula Crops", "location": "Luapula Province", "email": "****@hotmail.com", "phone": "****7654"},
+    {"name": "Victor Chibuye", "company": "Muchinga Farms", "location": "Muchinga Province", "email": "****@outlook.com", "phone": "****6789"},
+    {"name": "Sarah Kapata", "company": "Western AgroTech", "location": "Western Province", "email": "****@gmail.com", "phone": "****3456"},
+    {"name": "Michael Kaunda", "company": "Zambezi Valley Agro", "location": "Southern Province", "email": "****@yahoo.com", "phone": "****4567"},
+    {"name": "Elizabeth Lungu", "company": "FarmLink Zambia", "location": "Lusaka", "email": "****@hotmail.com", "phone": "****7654"},
+    {"name": "James Mwale", "company": "AgroCare Ltd", "location": "Central Province", "email": "****@outlook.com", "phone": "****6789"},
+    {"name": "Christine Musonda", "company": "EcoFarms", "location": "Copperbelt", "email": "****@gmail.com", "phone": "****3456"},
+    {"name": "Robert Chansa", "company": "Future Harvest", "location": "Northern Province", "email": "****@yahoo.com", "phone": "****4567"},
+    {"name": "Thandiwe Nkonde", "company": "SmartAgri", "location": "Luapula Province", "email": "****@hotmail.com", "phone": "****7654"},
+    {"name": "Wilson Kasongo", "company": "AgroMax Solutions", "location": "Eastern Province", "email": "****@outlook.com", "phone": "****6789"},
+    {"name": "Patricia Mwansa", "company": "GreenFields", "location": "Southern Province", "email": "****@gmail.com", "phone": "****3456"},
+    {"name": "Andrew Sampa", "company": "CropMaster", "location": "North-Western Province", "email": "****@yahoo.com", "phone": "****4567"},
+    {"name": "Esther Mwansa", "company": "AgriPro", "location": "Luapula Province", "email": "****@hotmail.com", "phone": "****7654"},
+    {"name": "Brian Chibanda", "company": "HarvestPlus", "location": "Muchinga Province", "email": "****@outlook.com", "phone": "****6789"},
+    {"name": "Mercy Mwiimbu", "company": "AgroFresh", "location": "Western Province", "email": "****@gmail.com", "phone": "****3456"},
+    {"name": "Frank Mweetwa", "company": "Farmers Alliance", "location": "Lusaka", "email": "****@yahoo.com", "phone": "****4567"},
+    {"name": "Dorothy Chisala", "company": "AgroTrend", "location": "Central Province", "email": "****@hotmail.com", "phone": "****7654"},
+    {"name": "Brenda Zulu", "company": "EcoFarm Enterprises", "location": "Western Province", "email": "****@yahoo.com", "phone": "****9987"},
+    {"name": "Patrick Nkandu", "company": "HarvestTech Ltd.", "location": "Lusaka", "email": "****@hotmail.com", "phone": "****4456"},
+    {"name": "Lillian Kapata", "company": "ZamAgro Innovations", "location": "Muchinga", "email": "****@outlook.com", "phone": "****7789"},
+    {"name": "Kelvin Simukonda", "company": "Future Farms Ltd.", "location": "Northern Province", "email": "****@gmail.com", "phone": "****3344"},
+    {"name": "Agnes Chibwe", "company": "FarmLink Zambia", "location": "Luapula", "email": "****@yahoo.com", "phone": "****5678"},
+    {"name": "Henry Mwewa", "company": "AgriEdge Technologies", "location": "Copperbelt", "email": "****@hotmail.com", "phone": "****2233"},
+    {"name": "Mutale Ndlovu", "company": "SmartAgro Solutions", "location": "Central Province", "email": "****@outlook.com", "phone": "****9901"},
+    {"name": "Esther Chansa", "company": "Sustainable AgriTech", "location": "North-Western Province", "email": "****@gmail.com", "phone": "****6655"},
+    {"name": "Oscar Ngoma", "company": "ProHarvest Ltd.", "location": "Lusaka", "email": "****@yahoo.com", "phone": "****8822"},
+    {"name": "Mercy Kasonde", "company": "FarmBoost Zambia", "location": "Southern Province", "email": "****@hotmail.com", "phone": "****4433"},
+    {"name": "Emmanuel Phiri", "company": "AgroVision Ltd.", "location": "Eastern Province", "email": "****@outlook.com", "phone": "****5566"},
+    {"name": "Catherine Mwansa", "company": "GreenHarvest Solutions", "location": "Muchinga", "email": "****@gmail.com", "phone": "****1199"},
+    {"name": "Victor Lungu", "company": "Precision Agriculture Zambia", "location": "Western Province", "email": "****@yahoo.com", "phone": "****7788"},
+    {"name": "Naomi Bwalya", "company": "TechFarm Innovations", "location": "Copperbelt", "email": "****@hotmail.com", "phone": "****3322"},
+    {"name": "Harrison Zimba", "company": "OrganicAgri Solutions", "location": "Northern Province", "email": "****@outlook.com", "phone": "****6644"},
+    {"name": "Felix Sikazwe", "company": "Zambia Agro Network", "location": "Luapula", "email": "****@gmail.com", "phone": "****2288"},
+    {"name": "Theresa Malama", "company": "AgriConnect Ltd.", "location": "Central Province", "email": "****@yahoo.com", "phone": "****1122"}
+]
+
         },
+        "taskActivityTracking": get_zambian_task_activities(),
         "reportingAnalytics": {
             "keyMetrics": {
                 "customerLifetimeValue": 5800,
                 "churnRate": 7.3,
-                "engagementRate": 81,via.placeholder.com/150x80?text=NetaGrow", width=150)
-                "satisfactionScore": 94st.markdown("## NetaGrow Zambia")
+                "engagementRate": 81,
+                "satisfactionScore": 94
             }
         },
         "salesMarketingTools": {
             "activeCampaigns": [
-                {"name": "Seasonal Discount", "status": "Active", "targetAudience": "Smallholder Farmers"},rd", "Sales Pipeline", "Contacts", "Tasks", "Campaigns", "Settings"],
-                {"name": "Referral Program", "status": "Ongoing", "targetAudience": "Existing Customers"},ter2", "funnel", "people-fill", "list-task", "bullseye", "gear"],
-                {"name": "Social Media Awareness", "status": "Active", "targetAudience": "New Leads"},n="cast",
-                {"name": "AgriTech Demo Sessions", "status": "Upcoming", "targetAudience": "Potential Partners"},
-                {"name": "Email Outreach to Businesses", "status": "Planned", "targetAudience": "Agribusiness Enterprises"}
-            ]
+                
+    {"name": "Seasonal Discount", "status": "Active", "targetAudience": "Smallholder Farmers"},
+    {"name": "Referral Program", "status": "Ongoing", "targetAudience": "Existing Customers"},
+    {"name": "Social Media Awareness", "status": "Active", "targetAudience": "New Leads"},
+    {"name": "AgriTech Demo Sessions", "status": "Upcoming", "targetAudience": "Potential Partners"},
+    {"name": "Email Outreach to Businesses", "status": "Planned", "targetAudience": "Agribusiness Enterprises"},
+    {"name": "Local Radio AgriTalks", "status": "Ongoing", "targetAudience": "Rural Farmers"},
+    {"name": "Webinar on AI in Agriculture", "status": "Upcoming", "targetAudience": "Tech-Savvy Farmers & Startups"},
+    {"name": "Farmer Training Workshops", "status": "Active", "targetAudience": "Cooperative Leaders"},
+    {"name": "Mobile SMS Tips & Alerts", "status": "Active", "targetAudience": "Rural Smallholders"},
+    {"name": "Agriculture Expo Booth", "status": "Planned", "targetAudience": "Large-Scale Farmers & Investors"},
+    {"name": "Partnership Outreach", "status": "Ongoing", "targetAudience": "NGOs & Development Partners"},
+    {"name": "YouTube Educational Series", "status": "Active", "targetAudience": "Young Farmers & Agripreneurs"},
+    {"name": "Pilot Program for Smart Sensors", "status": "Upcoming", "targetAudience": "Early Adopters"},
+    {"name": "Discount on First Subscription", "status": "Active", "targetAudience": "New Users"},
+    {"name": "AI-Powered Crop Advisory Launch", "status": "Upcoming", "targetAudience": "Tech-Enabled Farmers"},
+    {"name": "Farmers' Market Activation", "status": "Ongoing", "targetAudience": "Local Market Vendors"},
+    {"name": "Data-Driven Farming Awareness", "status": "Planned", "targetAudience": "Agricultural Extension Officers"},
+    {"name": "Women in Agriculture Initiative", "status": "Active", "targetAudience": "Female Farmers & Entrepreneurs"},
+    {"name": "Young Agripreneurs Challenge", "status": "Upcoming", "targetAudience": "University & College Students"},
+    {"name": "Smart Farming Equipment Trial", "status": "Planned", "targetAudience": "Commercial Farmers"}
+]
         }
-    }   "nav-link": {"font-size": "14px", "text-align": "left", "margin":"0px", "--hover-color": "#E8F5E9"},
-           "nav-link-selected": {"background-color": "#E8F5E9", "color": "#2E7D32"},
-    # Add enhanced data    }
+    }
+    
+    # Add enhanced data
     data = enhance_netagrow_data(data)
     
     return data
 
-netagrow_data = load_data()    current_date = datetime.now().strftime("%d %b %Y")
-")
+netagrow_data = load_data()
+
 # Sidebar navigation with icons using streamlit-option-menu
 with st.sidebar:
-    st.image("https://via.placeholder.com/150x80?text=NetaGrow", width=150)
-    st.markdown("## NetaGrow Zambia")tom: 20px;">'
-    st.markdown("---")>NetaGrow Zambia CRM Dashboard</h1>'
-                '<p style="margin: 5px 0;">A comprehensive view of your agricultural technology business</p></div>',
-    selected = option_menu(allow_html=True)
+    st.image("https://via.placeholder.com/150x80?text=Netagrow", width=150)
+    st.markdown("## Netagrow")
+    st.markdown("---")
+    
+    selected = option_menu(
         menu_title=None, 
         options=["Dashboard", "Sales Pipeline", "Contacts", "Tasks", "Campaigns", "Settings"],
-        icons=["speedometer2", "funnel", "people-fill", "list-task", "bullseye", "gear"],ner():
+        icons=["speedometer2", "funnel", "people-fill", "list-task", "bullseye", "gear"],
         menu_icon="cast",
         default_index=0,
         styles={
-            "container": {"padding": "0!important", "background-color": "transparent"}, Data by Time Period:",
-            "icon": {"color": "green", "font-size": "16px"},   ["Last 30 Days", "Last 3 Months", "Last 6 Months", "Last Year", "All Time"],
-            "nav-link": {"font-size": "14px", "text-align": "left", "margin":"0px", "--hover-color": "#E8F5E9"},dex=2
+            "container": {"padding": "0!important", "background-color": "transparent"},
+            "icon": {"color": "green", "font-size": "16px"},
+            "nav-link": {"font-size": "14px", "text-align": "left", "margin":"0px", "--hover-color": "#E8F5E9"},
             "nav-link-selected": {"background-color": "#E8F5E9", "color": "#2E7D32"},
         }
-    )ass="export-container">', unsafe_allow_html=True)
+    )
     
     st.markdown("---")
-    st.info("CRM Version 1.0.0")
-    current_date = datetime.now().strftime("%d %b %Y")ns=["Revenue"], 
-    st.text(f"Date: {current_date}")    index=netagrow_data["revenueData"]["labels"]), 
+    st.info("Netagrow CRM v1.0 - Powering Agricultural Innovation")
+    current_date = datetime.now().strftime("%d %b %Y")
+    st.text(f"Date: {current_date}")
 
 # Main content based on navigation
 if selected == "Dashboard":
-    st.markdown('<div style="background-color: #2E7D32; color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">'ns=["Revenue"], 
-                '<h1 style="margin: 0;">NetaGrow Zambia CRM Dashboard</h1>'     index=netagrow_data["revenueData"]["labels"]), 
-                '<p style="margin: 5px 0;">A comprehensive view of your agricultural technology business</p></div>',"), 
-                unsafe_allow_html=True)                            unsafe_allow_html=True)
-    safe_allow_html=True)
+    st.markdown('<div style="background-color: #2E7D32; color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">'
+                '<h1 style="margin: 0;">Netagrow CRM Dashboard</h1>'
+                '<p style="margin: 5px 0;">Accelerate growth with data-driven agricultural intelligence</p></div>',
+                unsafe_allow_html=True)
+    
     # Date range filter
     with st.container():
-        col1, col2 = st.columns([4, 1])", unsafe_allow_html=True)
-        with col1:    st.markdown("<h3>Key Performance Metrics</h3>", unsafe_allow_html=True)
+        col1, col2 = st.columns([4, 1])
+        with col1:
             date_filter = st.selectbox(
                 "Filter Data by Time Period:",
-                ["Last 30 Days", "Last 3 Months", "Last 6 Months", "Last Year", "All Time"],on delay to each metric card
-                index=2erate([col1, col2, col3, col4]):
+                ["Last 30 Days", "Last 3 Months", "Last 6 Months", "Last Year", "All Time"],
+                index=2
             )
         with col2:
-            st.markdown('<div class="export-container">', unsafe_allow_html=True)ion-delay: {i*0.1}s;">', unsafe_allow_html=True)
-            export_options = st.expander("Export Data")talFarmers"])}</h2>', unsafe_allow_html=True)
-            with export_options:_html=True)
+            st.markdown('<div class="export-container">', unsafe_allow_html=True)
+            export_options = st.expander("Export Data")
+            with export_options:
                 st.markdown(export_to_csv(pd.DataFrame(netagrow_data["revenueData"]["data"], 
-                                                       columns=["Revenue"], owth)
-                                                       index=netagrow_data["revenueData"]["labels"]), own(f'<p class="{growth_class}">{symbol} {abs(growth)}%</p>', unsafe_allow_html=True)
+                                                       columns=["Revenue"], 
+                                                       index=netagrow_data["revenueData"]["labels"]), 
                                            "revenue_data"), 
                             unsafe_allow_html=True)
-                st.markdown(export_to_excel(pd.DataFrame(netagrow_data["revenueData"]["data"], tion-delay: {i*0.1}s;">', unsafe_allow_html=True)
+                st.markdown(export_to_excel(pd.DataFrame(netagrow_data["revenueData"]["data"], 
                                                         columns=["Revenue"], 
                                                         index=netagrow_data["revenueData"]["labels"]), 
-                                            "revenue_data"), ts"]["activeUsers"] / netagrow_data["stats"]["totalFarmers"]) * 100, 1)
-                            unsafe_allow_html=True)own(f'<p>{active_percentage}% of total farmers</p>', unsafe_allow_html=True)
+                                            "revenue_data"), 
+                            unsafe_allow_html=True)
             st.markdown('</div>', unsafe_allow_html=True)
 
-    # Key Metrics row with animationion-delay: {i*0.1}s;">', unsafe_allow_html=True)
-    st.markdown("<div class='custom-card'>", unsafe_allow_html=True)ta"]["totalRevenue"])}</h2>', unsafe_allow_html=True)
-    st.markdown("<h3>Key Performance Metrics</h3>", unsafe_allow_html=True)_html=True)
+    # Key Metrics row with animation
+    st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
+    st.markdown("<h3>Key Performance Metrics</h3>", unsafe_allow_html=True)
     col1, col2, col3, col4 = st.columns(4)
-owth)
-    # Add animation delay to each metric cardown(f'<p class="{growth_class}">{symbol} {abs(growth)}%</p>', unsafe_allow_html=True)
+
+    # Add animation delay to each metric card
     for i, col in enumerate([col1, col2, col3, col4]):
         with col:
-            if i == 0:n-delay: {i*0.1}s;">', unsafe_allow_html=True)
-                st.markdown(f'<div class="metric-card animated" style="animation-delay: {i*0.1}s;">', unsafe_allow_html=True)%</h2>', unsafe_allow_html=True)
-                st.markdown(f'<h2>{format_number(netagrow_data["stats"]["totalFarmers"])}</h2>', unsafe_allow_html=True)ow_html=True)
+            if i == 0:
+                st.markdown(f'<div class="metric-card animated" style="animation-delay: {i*0.1}s;">', unsafe_allow_html=True)
+                st.markdown(f'<h2>{format_number(netagrow_data["stats"]["totalFarmers"])}</h2>', unsafe_allow_html=True)
                 st.markdown('<h4>Total Farmers</h4>', unsafe_allow_html=True)
-                growth = netagrow_data["stats"]["monthlyGrowth"]["farmers"]owth)
-                symbol, growth_class = get_trend_indicator(growth)lass}">{symbol} {abs(growth)}%</p>', unsafe_allow_html=True)
-                st.markdown(f'<p class="{growth_class}">{symbol} {abs(growth)}%</p>', unsafe_allow_html=True)                st.markdown('</div>', unsafe_allow_html=True)
-                st.markdown('</div>', unsafe_allow_html=True)"</div>", unsafe_allow_html=True)
+                growth = netagrow_data["stats"]["monthlyGrowth"]["farmers"]
+                symbol, growth_class = get_trend_indicator(growth)
+                st.markdown(f'<p class="{growth_class}">{symbol} {abs(growth)}%</p>', unsafe_allow_html=True)
+                st.markdown('</div>', unsafe_allow_html=True)
             elif i == 1:
                 st.markdown(f'<div class="metric-card animated" style="animation-delay: {i*0.1}s;">', unsafe_allow_html=True)
-                st.markdown(f'<h2>{format_number(netagrow_data["stats"]["activeUsers"])}</h2>', unsafe_allow_html=True)    st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
-                st.markdown('<h4>Active Users</h4>', unsafe_allow_html=True) = st.columns(2)
+                st.markdown(f'<h2>{format_number(netagrow_data["stats"]["activeUsers"])}</h2>', unsafe_allow_html=True)
+                st.markdown('<h4>Active Users</h4>', unsafe_allow_html=True)
                 active_percentage = round((netagrow_data["stats"]["activeUsers"] / netagrow_data["stats"]["totalFarmers"]) * 100, 1)
                 st.markdown(f'<p>{active_percentage}% of total farmers</p>', unsafe_allow_html=True)
-                st.markdown('</div>', unsafe_allow_html=True)tml=True)
+                st.markdown('</div>', unsafe_allow_html=True)
             elif i == 2:
-                st.markdown(f'<div class="metric-card animated" style="animation-delay: {i*0.1}s;">', unsafe_allow_html=True)  'Month': netagrow_data["revenueData"]["labels"],
+                st.markdown(f'<div class="metric-card animated" style="animation-delay: {i*0.1}s;">', unsafe_allow_html=True)
                 st.markdown(f'<h2>{format_currency(netagrow_data["revenueData"]["totalRevenue"])}</h2>', unsafe_allow_html=True)
                 st.markdown('<h4>Total Revenue</h4>', unsafe_allow_html=True)
-                growth = netagrow_data["stats"]["monthlyGrowth"]["revenue"]fig = px.line(revenue_df, x='Month', y='Revenue', markers=True, title="",
-                symbol, growth_class = get_trend_indicator(growth)s={'Revenue': 'Revenue (ZMW)'}, color_discrete_sequence=['#2E7D32'])
+                growth = netagrow_data["stats"]["monthlyGrowth"]["revenue"]
+                symbol, growth_class = get_trend_indicator(growth)
                 st.markdown(f'<p class="{growth_class}">{symbol} {abs(growth)}%</p>', unsafe_allow_html=True)
                 st.markdown('</div>', unsafe_allow_html=True)
             elif i == 3:
-                st.markdown(f'<div class="metric-card animated" style="animation-delay: {i*0.1}s;">', unsafe_allow_html=True){x}</b><br>Revenue: ZMW %{y:,.0f}<extra></extra>',
-                st.markdown(f'<h2>{netagrow_data["stats"]["deviceAdoption"]}%</h2>', unsafe_allow_html=True)   line=dict(width=3),
-                st.markdown('<h4>Device Adoption</h4>', unsafe_allow_html=True)    marker=dict(size=8)
+                st.markdown(f'<div class="metric-card animated" style="animation-delay: {i*0.1}s;">', unsafe_allow_html=True)
+                st.markdown(f'<h2>{netagrow_data["stats"]["deviceAdoption"]}%</h2>', unsafe_allow_html=True)
+                st.markdown('<h4>Device Adoption</h4>', unsafe_allow_html=True)
                 growth = netagrow_data["stats"]["monthlyGrowth"]["adoption"]
                 symbol, growth_class = get_trend_indicator(growth)
-                st.markdown(f'<p class="{growth_class}">{symbol} {abs(growth)}%</p>', unsafe_allow_html=True)isibility
+                st.markdown(f'<p class="{growth_class}">{symbol} {abs(growth)}%</p>', unsafe_allow_html=True)
                 st.markdown('</div>', unsafe_allow_html=True)
     st.markdown("</div>", unsafe_allow_html=True)
-row_data["revenueData"]["labels"].index(month)
-    # Charts row"revenueData"]["data"][month_index]
-    st.markdown("<div class='custom-card'>", unsafe_allow_html=True)ion(
-    col1, col2 = st.columns(2)ue, 
 
-    with col1:e, 
+    # Charts row
+    st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
+    col1, col2 = st.columns(2)
+
+    with col1:
         st.markdown('<h3>Revenue Trend</h3>', unsafe_allow_html=True)
         revenue_df = pd.DataFrame({
-            'Month': netagrow_data["revenueData"]["labels"],E9",
-            'Revenue': netagrow_data["revenueData"]["data"]"#2E7D32",
+            'Month': netagrow_data["revenueData"]["labels"],
+            'Revenue': netagrow_data["revenueData"]["data"]
         })
-        fig = px.line(revenue_df, x='Month', y='Revenue', markers=True, title="",   borderpad=4,
-                      labels={'Revenue': 'Revenue (ZMW)'}, color_discrete_sequence=['#2E7D32'])    font=dict(size=10, color="#2E7D32")
+        fig = px.line(revenue_df, x='Month', y='Revenue', markers=True, title="",
+                      labels={'Revenue': 'Revenue (ZMW)'}, color_discrete_sequence=['#2E7D32'])
         
         # Enhanced tooltips
         fig.update_traces(
             hovertemplate='<b>%{x}</b><br>Revenue: ZMW %{y:,.0f}<extra></extra>',
-            line=dict(width=3),b=20), 
-            marker=dict(size=8))',
+            line=dict(width=3),
+            marker=dict(size=8)
         )
-        lse),
-        # Add annotations with improved visibility0,0.1)'),
-        notes = netagrow_data["revenueData"]["monthlyNotes"]   hovermode="x unified",
-        for month, note in notes.items():=12)
-            month_index = netagrow_data["revenueData"]["labels"].index(month)        )
-            revenue = netagrow_data["revenueData"]["data"][month_index]tly_chart(fig, use_container_width=True)
+        
+        # Add annotations with improved visibility
+        notes = netagrow_data["revenueData"]["monthlyNotes"]
+        for month, note in notes.items():
+            month_index = netagrow_data["revenueData"]["labels"].index(month)
+            revenue = netagrow_data["revenueData"]["data"][month_index]
             fig.add_annotation(
                 x=month, y=revenue, 
-                text=note, ml=True)
+                text=note, 
                 showarrow=True, 
                 arrowhead=2, 
-                ax=0, ay=-40,  'Deal Count': netagrow_data["salesPipeline"]["dealCounts"],
-                bgcolor="#E8F5E9",    'Deal Value': netagrow_data["salesPipeline"]["dealValues"]
+                ax=0, ay=-40, 
+                bgcolor="#E8F5E9",
                 bordercolor="#2E7D32",
                 borderwidth=1,
-                borderpad=4,# Interactive tab selection
-                font=dict(size=10, color="#2E7D32") = st.tabs(["By Count", "By Value"])
+                borderpad=4,
+                font=dict(size=10, color="#2E7D32")
             )
             
         fig.update_layout(
-            height=350, , 
-            margin=dict(l=20, r=20, t=20, b=20), ount', 
+            height=350, 
+            margin=dict(l=20, r=20, t=20, b=20), 
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)', 
-            xaxis=dict(showgrid=False),#2E7D32', '#388E3C', '#43A047', '#4CAF50', '#66BB6A', '#81C784'],
-            yaxis=dict(showgrid=True, gridcolor='rgba(0,0,0,0.1)'),   # Add custom data for tooltip
-            hovermode="x unified",eal Value']
+            xaxis=dict(showgrid=False),
+            yaxis=dict(showgrid=True, gridcolor='rgba(0,0,0,0.1)'),
+            hovermode="x unified",
             hoverlabel=dict(bgcolor="white", font_size=12)
         )
-        st.plotly_chart(fig, use_container_width=True)ig.update_traces(
-'<b>%{y}</b><br>Count: %{x}<br>Value: ZMW %{customdata[0]:,.0f}<extra></extra>'
+        st.plotly_chart(fig, use_container_width=True)
+
     with col2:
         st.markdown('<h3>Sales Pipeline</h3>', unsafe_allow_html=True)
         pipeline_df = pd.DataFrame({
-            'Stage': netagrow_data["salesPipeline"]["stages"],0, t=20, b=20), 
+            'Stage': netagrow_data["salesPipeline"]["stages"],
             'Deal Count': netagrow_data["salesPipeline"]["dealCounts"],
-            'Deal Value': netagrow_data["salesPipeline"]["dealValues"]   yaxis=dict(title=''),
-        })=12)
-        )
-        # Interactive tab selectiontly_chart(fig, use_container_width=True)
+            'Deal Value': netagrow_data["salesPipeline"]["dealValues"]
+        })
+        # Interactive tab selection
         tab1, tab2 = st.tabs(["By Count", "By Value"])
         
         with tab1:
-            fig = px.funnel(, 
-                pipeline_df, alue', 
+            fig = px.funnel(
+                pipeline_df, 
                 x='Deal Count', 
                 y='Stage', 
-                title="",#2E7D32', '#388E3C', '#43A047', '#4CAF50', '#66BB6A', '#81C784'],
-                color_discrete_sequence=['#2E7D32', '#388E3C', '#43A047', '#4CAF50', '#66BB6A', '#81C784'],   # Add custom data for tooltip
-                # Add custom data for tooltipeal Count']
-                custom_data=['Deal Value']
-            )
-            # Enhanced tooltipsig.update_traces(
-            fig.update_traces('<b>%{y}</b><br>Value: ZMW %{x:,.0f}<br>Count: %{customdata[0]}<extra></extra>'
-                hovertemplate='<b>%{y}</b><br>Count: %{x}<br>Value: ZMW %{customdata[0]:,.0f}<extra></extra>'
-            )
-            fig.update_layout(
-                height=350, 0, t=20, b=20), 
-                margin=dict(l=20, r=20, t=20, b=20), 
-                paper_bgcolor='rgba(0,0,0,0)',   yaxis=dict(title=''),
-                yaxis=dict(title=''),=12)
-                hoverlabel=dict(bgcolor="white", font_size=12)
-            )            st.plotly_chart(fig, use_container_width=True)
-            st.plotly_chart(fig, use_container_width=True)nsafe_allow_html=True)
-            
-        with tab2:
-            fig = px.funnel(    st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
-                pipeline_df,  = st.columns(2)
-                x='Deal Value', 
-                y='Stage', 
-                title="",w_html=True)
+                title="",
                 color_discrete_sequence=['#2E7D32', '#388E3C', '#43A047', '#4CAF50', '#66BB6A', '#81C784'],
-                # Add custom data for tooltip  'Source': netagrow_data["leads"]["sources"],
-                custom_data=['Deal Count']ge': netagrow_data["leads"]["percentages"]
+                # Add custom data for tooltip
+                custom_data=['Deal Value']
             )
             # Enhanced tooltips
             fig.update_traces(
-                hovertemplate='<b>%{y}</b><br>Value: ZMW %{x:,.0f}<br>Count: %{customdata[0]}<extra></extra>'rcentage', 
-            )urce', 
+                hovertemplate='<b>%{y}</b><br>Count: %{x}<br>Value: ZMW %{customdata[0]:,.0f}<extra></extra>'
+            )
             fig.update_layout(
-                height=350,    hole=0.4,
-                margin=dict(l=20, r=20, t=20, b=20), _sequence=['#2E7D32', '#388E3C', '#43A047', '#4CAF50', '#66BB6A']
+                height=350, 
+                margin=dict(l=20, r=20, t=20, b=20), 
+                paper_bgcolor='rgba(0,0,0,0)', 
+                yaxis=dict(title=''),
+                hoverlabel=dict(bgcolor="white", font_size=12)
+            )
+            st.plotly_chart(fig, use_container_width=True)
+            
+        with tab2:
+            fig = px.funnel(
+                pipeline_df, 
+                x='Deal Value', 
+                y='Stage', 
+                title="",
+                color_discrete_sequence=['#2E7D32', '#388E3C', '#43A047', '#4CAF50', '#66BB6A', '#81C784'],
+                # Add custom data for tooltip
+                custom_data=['Deal Count']
+            )
+            # Enhanced tooltips
+            fig.update_traces(
+                hovertemplate='<b>%{y}</b><br>Value: ZMW %{x:,.0f}<br>Count: %{customdata[0]}<extra></extra>'
+            )
+            fig.update_layout(
+                height=350, 
+                margin=dict(l=20, r=20, t=20, b=20), 
                 paper_bgcolor='rgba(0,0,0,0)',
                 yaxis=dict(title=''),
                 hoverlabel=dict(bgcolor="white", font_size=12)
-            )   textinfo='percent+label',
-            st.plotly_chart(fig, use_container_width=True)'<b>%{label}</b><br>%{value}%<extra></extra>'
+            )
+            st.plotly_chart(fig, use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
     # Third row - Two cards
     st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
-    col1, col2 = st.columns(2)0,0)',
-"h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5),
+    col1, col2 = st.columns(2)
+
     with col1:
-        st.markdown('<h3>Lead Sources</h3>', unsafe_allow_html=True)   uniformtext_mode='hide',
-        leads_df = pd.DataFrame({=12)
-            'Source': netagrow_data["leads"]["sources"],        )
-            'Percentage': netagrow_data["leads"]["percentages"]tly_chart(fig, use_container_width=True)
+        st.markdown('<h3>Lead Sources</h3>', unsafe_allow_html=True)
+        leads_df = pd.DataFrame({
+            'Source': netagrow_data["leads"]["sources"],
+            'Percentage': netagrow_data["leads"]["percentages"]
         })
         fig = px.pie(
-            leads_df, kdown</h3>', unsafe_allow_html=True)
+            leads_df, 
             values='Percentage', 
             names='Source', 
-            title="",   'Product': ['NetaBusiness', 'FarmAssist', 'NetaSense'],
-            hole=0.4,["farmAssist"], breakdown_data["netaSense"]]
+            title="",
+            hole=0.4,
             color_discrete_sequence=['#2E7D32', '#388E3C', '#43A047', '#4CAF50', '#66BB6A']
         )
         fig.update_traces(
             textposition='inside', 
-            textinfo='percent+label',, xaxis=dict(showgrid=False),
-            hovertemplate='<b>%{label}</b><br>%{value}%<extra></extra>'e, gridcolor='rgba(0,0,0,0.1)', title='Percentage (%)'))
-        )        st.plotly_chart(fig, use_container_width=True)
+            textinfo='percent+label',
+            hovertemplate='<b>%{label}</b><br>%{value}%<extra></extra>'
+        )
         fig.update_layout(
             height=300, 
-            margin=dict(l=20, r=20, t=20, b=20), vities and key metrics
-            paper_bgcolor='rgba(0,0,0,0)',    st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
-            legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5), = st.columns(2)
+            margin=dict(l=20, r=20, t=20, b=20), 
+            paper_bgcolor='rgba(0,0,0,0)',
+            legend=dict(orientation="h", yanchor="bottom", y=-0.2, xanchor="center", x=0.5),
             uniformtext_minsize=12, 
             uniformtext_mode='hide',
             hoverlabel=dict(bgcolor="white", font_size=12)
         )
-        st.plotly_chart(fig, use_container_width=True)0%; border-collapse: collapse;'>"
-<th>Status</th><th>Due Date</th></tr>"
+        st.plotly_chart(fig, use_container_width=True)
+
     with col2:
         st.markdown('<h3>Revenue Breakdown</h3>', unsafe_allow_html=True)
-        breakdown_data = netagrow_data["revenueData"]["breakdown"] class='{status_class}'>{task['status']}</td>"
-        breakdown_df = pd.DataFrame({<td>{task['assignedTo']}</td>{status_html}<td>{task['dueDate']}</td></tr>"
+        breakdown_data = netagrow_data["revenueData"]["breakdown"]
+        breakdown_df = pd.DataFrame({
             'Product': ['NetaBusiness', 'FarmAssist', 'NetaSense'],
-            'Percentage': [breakdown_data["netaBusiness"], breakdown_data["farmAssist"], breakdown_data["netaSense"]]        st.markdown(task_html, unsafe_allow_html=True)
-        })ton("Add New Task", key="add_new_task")
+            'Percentage': [breakdown_data["netaBusiness"], breakdown_data["farmAssist"], breakdown_data["netaSense"]]
+        })
         fig = px.bar(breakdown_df, x='Product', y='Percentage', title="",
                      color_discrete_sequence=['#2E7D32', '#388E3C', '#43A047'])
-        fig.update_layout(height=300, margin=dict(l=20, r=20, t=20, b=20), paper_bgcolor='rgba(0,0,0,0)',s</h3>', unsafe_allow_html=True)
-                          plot_bgcolor='rgba(0,0,0,0)', xaxis=dict(showgrid=False),        key_metrics = netagrow_data["reportingAnalytics"]["keyMetrics"]
-                          yaxis=dict(showgrid=True, gridcolor='rgba(0,0,0,0.1)', title='Percentage (%)'))ics_row2 = st.columns(2)
+        fig.update_layout(height=300, margin=dict(l=20, r=20, t=20, b=20), paper_bgcolor='rgba(0,0,0,0)',
+                          plot_bgcolor='rgba(0,0,0,0)', xaxis=dict(showgrid=False),
+                          yaxis=dict(showgrid=True, gridcolor='rgba(0,0,0,0.1)', title='Percentage (%)'))
         st.plotly_chart(fig, use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
 
     # Bottom row - Recent activities and key metrics
-    st.markdown("<div class='custom-card'>", unsafe_allow_html=True)ey_metrics["customerLifetimeValue"],
+    st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
     col1, col2 = st.columns(2)
 
-    with col1:range': [None, 10000]},
+    with col1:
         st.markdown('<h3>Recent Tasks</h3>', unsafe_allow_html=True)
         tasks_df = pd.DataFrame(netagrow_data["taskActivityTracking"]["activities"])
         task_html = "<table style='width:100%; border-collapse: collapse;'>"
-        task_html += "<tr><th>Task</th><th>Assigned To</th><th>Status</th><th>Due Date</th></tr>"   {'range': [3000, 6000], 'color': "#FFCDD2"},
-        for _, task in tasks_df.iterrows():       {'range': [6000, 10000], 'color': "#E8F5E9"}
-            status_class = get_status_class(task["status"])      ]
+        task_html += "<tr><th>Task</th><th>Assigned To</th><th>Status</th><th>Due Date</th></tr>"
+        for _, task in tasks_df.iterrows():
+            status_class = get_status_class(task["status"])
             status_html = f"<td class='{status_class}'>{task['status']}</td>"
             task_html += f"<tr><td>{task['task']}</td><td>{task['assignedTo']}</td>{status_html}<td>{task['dueDate']}</td></tr>"
-        task_html += "</table>"            fig.update_layout(height=200, margin=dict(l=10, r=10, t=30, b=10), paper_bgcolor='rgba(0,0,0,0)')
-        st.markdown(task_html, unsafe_allow_html=True)t(fig, use_container_width=True)
+        task_html += "</table>"
+        st.markdown(task_html, unsafe_allow_html=True)
         st.button("Add New Task", key="add_new_task")
 
     with col2:
         st.markdown('<h3>Key Performance Indicators</h3>', unsafe_allow_html=True)
         key_metrics = netagrow_data["reportingAnalytics"]["keyMetrics"]
-        metrics_row1, metrics_row2 = st.columns(2)'text': "Churn Rate (%)"},
-g': {'color': '#2E7D32'}},
+        metrics_row1, metrics_row2 = st.columns(2)
+
         with metrics_row1:
-            fig = go.Figure(go.Indicator(range': [None, 20]},
+            fig = go.Figure(go.Indicator(
                 mode="gauge+number",
                 value=key_metrics["customerLifetimeValue"],
                 title={'text': "CLV (ZMW)"},
-                gauge={   {'range': [5, 10], 'color': "#FFECB3"},
-                    'axis': {'range': [None, 10000]},       {'range': [10, 20], 'color': "#FFCDD2"}
-                    'bar': {'color': "#2E7D32"},      ]
+                gauge={
+                    'axis': {'range': [None, 10000]},
+                    'bar': {'color': "#2E7D32"},
                     'steps': [
                         {'range': [0, 3000], 'color': "#FFEBEE"},
-                        {'range': [3000, 6000], 'color': "#FFCDD2"},            fig.update_layout(height=200, margin=dict(l=10, r=10, t=30, b=10), paper_bgcolor='rgba(0,0,0,0)')
-                        {'range': [6000, 10000], 'color': "#E8F5E9"}th=True)
+                        {'range': [3000, 6000], 'color': "#FFCDD2"},
+                        {'range': [6000, 10000], 'color': "#E8F5E9"}
                     ]
-                }ics_row4 = st.columns(2)
+                }
             ))
             fig.update_layout(height=200, margin=dict(l=10, r=10, t=30, b=10), paper_bgcolor='rgba(0,0,0,0)')
             st.plotly_chart(fig, use_container_width=True)
 
-        with metrics_row2:ey_metrics["engagementRate"],
+        with metrics_row2:
             fig = go.Figure(go.Indicator(
                 mode="gauge+number+delta",
-                value=key_metrics["churnRate"],range': [None, 100]},
+                value=key_metrics["churnRate"],
                 title={'text': "Churn Rate (%)"},
                 delta={'reference': 10, 'decreasing': {'color': '#2E7D32'}},
                 gauge={
-                    'axis': {'range': [None, 20]},   {'range': [50, 75], 'color': "#FFECB3"},
-                    'bar': {'color': "#C62828"},       {'range': [75, 100], 'color': "#E8F5E9"}
-                    'steps': [      ]
+                    'axis': {'range': [None, 20]},
+                    'bar': {'color': "#C62828"},
+                    'steps': [
                         {'range': [0, 5], 'color': "#E8F5E9"},
                         {'range': [5, 10], 'color': "#FFECB3"},
-                        {'range': [10, 20], 'color': "#FFCDD2"}            fig.update_layout(height=200, margin=dict(l=10, r=10, t=30, b=10), paper_bgcolor='rgba(0,0,0,0)')
-                    ]t(fig, use_container_width=True)
+                        {'range': [10, 20], 'color': "#FFCDD2"}
+                    ]
                 }
             ))
             fig.update_layout(height=200, margin=dict(l=10, r=10, t=30, b=10), paper_bgcolor='rgba(0,0,0,0)')
             st.plotly_chart(fig, use_container_width=True)
-ey_metrics["satisfactionScore"],
+
         metrics_row3, metrics_row4 = st.columns(2)
 
-        with metrics_row3:range': [None, 100]},
+        with metrics_row3:
             fig = go.Figure(go.Indicator(
                 mode="gauge+number",
                 value=key_metrics["engagementRate"],
-                title={'text': "Engagement (%)"},  {'range': [70, 85], 'color': "#FFECB3"},
-                gauge={[85, 100], 'color': "#E8F5E9"}
+                title={'text': "Engagement (%)"},
+                gauge={
                     'axis': {'range': [None, 100]},
                     'bar': {'color': "#2E7D32"},
-                    'steps': [olor': "green", 'width': 4},
-                        {'range': [0, 50], 'color': "#FFCDD2"},   'thickness': 0.75,
-                        {'range': [50, 75], 'color': "#FFECB3"},       'value': 90
-                        {'range': [75, 100], 'color': "#E8F5E9"}      }
+                    'steps': [
+                        {'range': [0, 50], 'color': "#FFCDD2"},
+                        {'range': [50, 75], 'color': "#FFECB3"},
+                        {'range': [75, 100], 'color': "#E8F5E9"}
                     ]
                 }
-            ))dict(l=10, r=10, t=30, b=10), paper_bgcolor='rgba(0,0,0,0)')
-            fig.update_layout(height=200, margin=dict(l=10, r=10, t=30, b=10), paper_bgcolor='rgba(0,0,0,0)')            st.plotly_chart(fig, use_container_width=True)
-            st.plotly_chart(fig, use_container_width=True)unsafe_allow_html=True)
+            ))
+            fig.update_layout(height=200, margin=dict(l=10, r=10, t=30, b=10), paper_bgcolor='rgba(0,0,0,0)')
+            st.plotly_chart(fig, use_container_width=True)
 
         with metrics_row4:
-            fig = go.Figure(go.Indicator(st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
-                mode="gauge+number",", unsafe_allow_html=True)
+            fig = go.Figure(go.Indicator(
+                mode="gauge+number",
                 value=key_metrics["satisfactionScore"],
                 title={'text': "Satisfaction (%)"},
-                gauge={combined_labels = netagrow_data["revenueData"]["labels"] + netagrow_data["revenueData"]["forecastLabels"]
-                    'axis': {'range': [None, 100]},["revenueData"]["forecast"]
+                gauge={
+                    'axis': {'range': [None, 100]},
                     'bar': {'color': "#2E7D32"},
-                    'steps': [# Create a marker for where historical data ends and forecast begins
-                        {'range': [0, 70], 'color': "#FFCDD2"},grow_data["revenueData"]["labels"]) + [True] * len(netagrow_data["revenueData"]["forecastLabels"])
+                    'steps': [
+                        {'range': [0, 70], 'color': "#FFCDD2"},
                         {'range': [70, 85], 'color': "#FFECB3"},
-                        {'range': [85, 100], 'color': "#E8F5E9"}art
+                        {'range': [85, 100], 'color': "#E8F5E9"}
                     ],
                     'threshold': {
-                        'line': {'color': "green", 'width': 4},  "Revenue": combined_data,
-                        'thickness': 0.75,    "IsForecast": is_forecast
+                        'line': {'color': "green", 'width': 4},
+                        'thickness': 0.75,
                         'value': 90
                     }
-                }ded chart
+                }
             ))
-            fig.update_layout(height=200, margin=dict(l=10, r=10, t=30, b=10), paper_bgcolor='rgba(0,0,0,0)') 
+            fig.update_layout(height=200, margin=dict(l=10, r=10, t=30, b=10), paper_bgcolor='rgba(0,0,0,0)')
             st.plotly_chart(fig, use_container_width=True)
     st.markdown("</div>", unsafe_allow_html=True)
-cast",
-    # Add forecast metrics,
-    st.markdown("<div class='custom-card'>", unsafe_allow_html=True)True,
-    st.markdown("<h3>Revenue Forecast</h3>", unsafe_allow_html=True)   labels={"Revenue": "Revenue (ZMW)", "IsForecast": ""},
-        title=""
+
+    # Add forecast metrics
+    st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
+    st.markdown("<h3>Revenue Forecast</h3>", unsafe_allow_html=True)
+
     # Combine historical and forecast data
     combined_labels = netagrow_data["revenueData"]["labels"] + netagrow_data["revenueData"]["forecastLabels"]
-    combined_data = netagrow_data["revenueData"]["data"] + netagrow_data["revenueData"]["forecast"]under forecast
-    etagrow_data["revenueData"]["labels"]), len(combined_labels)):
+    combined_data = netagrow_data["revenueData"]["data"] + netagrow_data["revenueData"]["forecast"]
+    
     # Create a marker for where historical data ends and forecast begins
     is_forecast = [False] * len(netagrow_data["revenueData"]["labels"]) + [True] * len(netagrow_data["revenueData"]["forecastLabels"])
     
-    # Create DataFrame for the chartbined_data[i],
-    forecast_df = pd.DataFrame({,
+    # Create DataFrame for the chart
+    forecast_df = pd.DataFrame({
         "Month": combined_labels,
-        "Revenue": combined_data,   line=dict(width=0),
-        "IsForecast": is_forecast        layer="below"
+        "Revenue": combined_data,
+        "IsForecast": is_forecast
     })
     
     # Create color-coded chart
     fig = px.line(
-        forecast_df,  b=20),
-        x="Month", )',
+        forecast_df, 
+        x="Month", 
         y="Revenue",
-        color="IsForecast",lse),
-        color_discrete_map={False: "#2E7D32", True: "#FFA000"},,0.1)'),
-        markers=True, unified",
-        labels={"Revenue": "Revenue (ZMW)", "IsForecast": ""},lor="white", font_size=12),
+        color="IsForecast",
+        color_discrete_map={False: "#2E7D32", True: "#FFA000"},
+        markers=True,
+        labels={"Revenue": "Revenue (ZMW)", "IsForecast": ""},
         title=""
-    )tion="h",
-    ,
-    # Add shaded area under forecast02,
-    for i in range(len(netagrow_data["revenueData"]["labels"]), len(combined_labels)):"right",
-        fig.add_shape(   x=1,
-            type="rect",       title=""
-            x0=i-0.5, x1=i+0.5,    )
+    )
+    
+    # Add shaded area under forecast
+    for i in range(len(netagrow_data["revenueData"]["labels"]), len(combined_labels)):
+        fig.add_shape(
+            type="rect",
+            x0=i-0.5, x1=i+0.5,
             y0=0, y1=combined_data[i],
             fillcolor="#FFF8E1",
             opacity=0.3,
             line=dict(width=0),
-            layer="below"next_forecast = netagrow_data["revenueData"]["forecast"][0]
-        )ast_actual) / last_actual) * 100
+            layer="below"
+        )
     
-    fig.update_layout(l3 = st.columns(3)
+    fig.update_layout(
         height=400,
         margin=dict(l=20, r=20, t=20, b=20),
-        paper_bgcolor='rgba(0,0,0,0)',urrent Month", 
-        plot_bgcolor='rgba(0,0,0,0)',   f"ZMW {last_actual:,.0f}", 
+        paper_bgcolor='rgba(0,0,0,0)',
+        plot_bgcolor='rgba(0,0,0,0)',
         xaxis=dict(showgrid=False),
         yaxis=dict(showgrid=True, gridcolor='rgba(0,0,0,0.1)'),
         hovermode="x unified",
         hoverlabel=dict(bgcolor="white", font_size=12),
-        legend=dict(t)", 
-            orientation="h",   f"ZMW {next_forecast:,.0f}", 
-            yanchor="bottom",{growth_pct:.1f}%"
+        legend=dict(
+            orientation="h",
+            yanchor="bottom",
             y=1.02,
             xanchor="right",
-            x=1,agrow_data["revenueData"]["forecast"])
+            x=1,
             title=""
-        )-Month Forecast", 
-    )   f"ZMW {total_forecast:,.0f}", 
-            ""
+        )
+    )
+    
+    st.plotly_chart(fig, use_container_width=True)
+    
     # Add forecast metrics
     last_actual = netagrow_data["revenueData"]["data"][-1]
-    next_forecast = netagrow_data["revenueData"]["forecast"][0]st.plotly_chart(fig, use_container_width=True)
-    growth_pct = ((next_forecast - last_actual) / last_actual) * 100ml=True)
+    next_forecast = netagrow_data["revenueData"]["forecast"][0]
+    growth_pct = ((next_forecast - last_actual) / last_actual) * 100
     
-    col1, col2, col3 = st.columns(3)y feed
-    with col1:st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
-        st.metric( = st.columns([1, 1])
+    col1, col2, col3 = st.columns(3)
+    with col1:
+        st.metric(
             "Current Month", 
-            f"ZMW {last_actual:,.0f}",  col1:
-            "">", unsafe_allow_html=True)
+            f"ZMW {last_actual:,.0f}", 
+            ""
         )
-    with col2:# Calendar view of upcoming tasks and events
-        st.metric(row_data["upcomingTasksEvents"][:10]  # Show only 10 entries
+    with col2:
+        st.metric(
             "Next Month (Forecast)", 
-            f"ZMW {next_forecast:,.0f}", t upcoming:
-            f"{growth_pct:.1f}%"coming tasks or events")
+            f"ZMW {next_forecast:,.0f}", 
+            f"{growth_pct:.1f}%"
         )
     with col3:
-        total_forecast = sum(netagrow_data["revenueData"]["forecast"])t defaultdict
+        total_forecast = sum(netagrow_data["revenueData"]["forecast"])
         st.metric(
             "3-Month Forecast", 
-            f"ZMW {total_forecast:,.0f}",     date_str = event["date"].strftime("%Y-%m-%d")
-            ""[date_str].append(event)
+            f"ZMW {total_forecast:,.0f}", 
+            ""
         )
     
-    st.plotly_chart(fig, use_container_width=True)ents in sorted(events_by_date.items()):
     st.markdown("</div>", unsafe_allow_html=True)
     
-    # Add calendar view and activity feednd-color: #E8F5E9; padding: 8px; border-left: 4px solid #2E7D32; margin-bottom: 10px;'>"
-    st.markdown("<div class='custom-card'>", unsafe_allow_html=True)   f"<h5 style='margin-top: 0; margin-bottom: 10px;'>{date_obj.strftime('%A, %B %d')}</h5>", 
-    col1, col2 = st.columns([1, 1])    unsafe_allow_html=True
+    # Add calendar view and activity feed
+    st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
+    col1, col2 = st.columns([1, 1])
     
     with col1:
         st.markdown("<h3>Upcoming Tasks & Events</h3>", unsafe_allow_html=True)
-        con = "📅" if event["type"] == "event" else "✓"
         # Calendar view of upcoming tasks and events
-        upcoming = netagrow_data["upcomingTasksEvents"][:10]  # Show only 10 entries
-        px; display: flex; align-items: center;'>"
-        if not upcoming:icon}</div>"
+        upcoming = netagrow_data["upcomingTasksEvents"][:4]  # Show only 4 entries
+        if not upcoming:
             st.write("No upcoming tasks or events")
-        else:trong>{event['title']}</strong></div>"
+        else:
             # Group by date
             from collections import defaultdict
-            events_by_date = defaultdict(list)class}' style='font-size: 0.8em;'>{event['status']}</div>"
-            for event in upcoming:   f"</div>",
-                date_str = event["date"].strftime("%Y-%m-%d")        unsafe_allow_html=True
+            events_by_date = defaultdict(list)
+            for event in upcoming:
+                date_str = event["date"].strftime("%Y-%m-%d")
                 events_by_date[date_str].append(event)
                 
-            # Display calendarsafe_allow_html=True)
+            # Display calendar with a more spacious layout
             for date_str, events in sorted(events_by_date.items()):
-                date_obj = datetime.strptime(date_str, "%Y-%m-%d")if st.button("+ Add Event"):
+                date_obj = datetime.strptime(date_str, "%Y-%m-%d")
+                days_until = (date_obj - datetime.now()).days
+                
+                # Calculate how many days away the event is
+                days_suffix = "Today" if days_until == 0 else f"Tomorrow" if days_until == 1 else f"In {days_until} days" if days_until > 0 else f"{abs(days_until)} days ago"
+                
                 st.markdown(
-                    f"<div style='background-color: #E8F5E9; padding: 8px; border-left: 4px solid #2E7D32; margin-bottom: 10px;'>"
-                    f"<h5 style='margin-top: 0; margin-bottom: 10px;'>{date_obj.strftime('%A, %B %d')}</h5>", 
+                    f"<div style='background-color: #E8F5E9; padding: 15px; border-radius: 8px; border-left: 4px solid #2E7D32; margin-bottom: 20px;'>"
+                    f"<h5 style='margin-top: 0; margin-bottom: 5px;'>{date_obj.strftime('%A, %B %d')} <span style='color: #666; font-size: 0.8em;'>({days_suffix})</span></h5>", 
                     unsafe_allow_html=True
                 )
                 
-                for event in events:event_type = st.selectbox("Event Type", ["Meeting", "Task", "Call", "Demo", "Other"])                 ["Chongo M.", "Mwape L.", "Kapembwa J.", "Nanyangwe T.", 
-                    event_type_icon = "📅" if event["type"] == "event" else "✓"Chongo M.", "Mwape L.", "Kapembwa J.", "Nanyangwe T."])alinda B.", "Nchimunya M."])
+                for event in events:
+                    event_type_icon = "📅" if event["type"] == "event" else "✓"
                     status_class = get_status_class(event["status"])
-                    st.markdown(ton("Save Event")ton("Save Event")
-                        f"<div style='margin-bottom: 8px; display: flex; align-items: center;'>"
-                        f"<div style='margin-right: 10px;'>{event_type_icon}</div>"                    st.success("Event added!")                    st.success("Event added!")
-                        f"<div style='flex-grow: 1;'>"          st.session_state.show_add_event = False          st.session_state.show_add_event = False
-                        f"<div><strong>{event['title']}</strong></div>"
-                        f"<div style='font-size: 0.8em;'>Assigned to: {event['assignedTo']}</div>" col2: col2:
-                        f"</div>"_allow_html=True)_allow_html=True)
+                    st.markdown(
+                        f"<div style='margin: 12px 0; padding: 10px; background-color: white; border-radius: 6px; box-shadow: 0 1px 3px rgba(0,0,0,0.1);'>"
+                        f"<div style='display: flex; align-items: center;'>"
+                        f"<div style='font-size: 1.2em; margin-right: 15px; color: #2E7D32;'>{event_type_icon}</div>"
+                        f"<div style='flex-grow: 1;'>"
+                        f"<div style='font-weight: 500; margin-bottom: 5px;'>{event['title']}</div>"
+                        f"<div style='font-size: 0.85em; color: #666;'>Assigned to: {event['assignedTo']}</div>"
+                        f"</div>"
                         f"<div class='{status_class}' style='font-size: 0.8em;'>{event['status']}</div>"
+                        f"</div>"
                         f"</div>",
                         unsafe_allow_html=True
                     )
                 
                 st.markdown("</div>", unsafe_allow_html=True)
-            </div>"</div>"
-            if st.button("+ Add Event"):yle='display: flex; justify-content: space-between; font-size: 0.8em; color: #757575;'>"yle='display: flex; justify-content: space-between; font-size: 0.8em; color: #757575;'>"
-                st.session_state.show_add_event = True {activity['user']}</span><span>{activity['timeAgo']}</span>" {activity['user']}</span><span>{activity['timeAgo']}</span>"
             
-            if st.session_state.get("show_add_event", False):   f"</div>",   f"</div>",
-                with st.form("add_event_form"):    unsafe_allow_html=True    unsafe_allow_html=True
+            # Add event button below the calendar
+            if st.button("+ Add Event", key="add_event_dashboard"):
+                st.session_state.show_add_event = True
+            
+            if st.session_state.get("show_add_event", False):
+                with st.form("add_event_form"):
                     event_title = st.text_input("Event Title")
-                    event_date = st.date_input("Event Date")                
-                    event_type = st.selectbox("Event Type", ["Meeting", "Task", "Call", "Demo", "Other"])er; margin-top: 10px;'><a href='#'>View All Activity</a></div>", unsafe_allow_html=True)er; margin-top: 10px;'><a href='#'>View All Activity</a></div>", unsafe_allow_html=True)
-                    event_assigned = st.selectbox("Assigned To", ["Chongo M.", "Mwape L.", "Kapembwa J.", "Nanyangwe T."])        
-                    llow_html=True)llow_html=True)
+                    event_date = st.date_input("Event Date")
+                    event_type = st.selectbox("Event Type", ["Meeting", "Task", "Call", "Demo", "Other"])
+                    event_assigned = st.selectbox("Assigned To", 
+                                                 ["Chongo M.", "Mwape L.", "Kapembwa J.", "Nanyangwe T."])
+                    
                     submitted = st.form_submit_button("Save Event")
                     if submitted:
-                        st.success("Event added!")us: 10px; margin-bottom: 20px;">'us: 10px; margin-bottom: 20px;">'
-                        st.session_state.show_add_event = False>Sales Pipeline</h1>'>Sales Pipeline</h1>'
-                    '<p style="margin: 5px 0;">Track and manage your sales opportunities</p></div>',                '<p style="margin: 5px 0;">Track and manage your sales opportunities</p></div>',
-    with col2:))
+                        st.success("Event added!")
+                        st.session_state.show_add_event = False
+
+    with col2:
         st.markdown("<h3>Recent Activity</h3>", unsafe_allow_html=True)
-            # Summary metrics for the pipeline    # Summary metrics for the pipeline
         activities = netagrow_data["recentActivities"]
         
         for activity in activities[:7]:  # Show only top 7 activities
             st.markdown(
                 f"<div style='border-bottom: 1px solid #e0e0e0; padding-bottom: 10px; margin-bottom: 10px;'>"
-                f"<div style='color: #2E7D32; font-weight: 500;'>{activity['activity']}</div>"    win_rate = netagrow_data["salesPipeline"]["dealCounts"][-2] / (    win_rate = netagrow_data["salesPipeline"]["dealCounts"][-2] / (
-                f"<div style='display: flex; justify-content: space-between; font-size: 0.8em; color: #757575;'>"  netagrow_data["salesPipeline"]["dealCounts"][-2] + netagrow_data["salesPipeline"]["dealCounts"][-1]) * 100  netagrow_data["salesPipeline"]["dealCounts"][-2] + netagrow_data["salesPipeline"]["dealCounts"][-1]) * 100
+                f"<div style='color: #2E7D32; font-weight: 500;'>{activity['activity']}</div>"
+                f"<div style='display: flex; justify-content: space-between; font-size: 0.8em; color: #757575;'>"
                 f"<span>by {activity['user']}</span><span>{activity['timeAgo']}</span>"
                 f"</div>"
-                f"</div>",True)True)
-                unsafe_allow_html=True}</h2>', unsafe_allow_html=True)}</h2>', unsafe_allow_html=True)
-            )        st.markdown('<h4>Total Deals</h4>', unsafe_allow_html=True)        st.markdown('<h4>Total Deals</h4>', unsafe_allow_html=True)
-            kdown('</div>', unsafe_allow_html=True)kdown('</div>', unsafe_allow_html=True)
+                f"</div>",
+                unsafe_allow_html=True
+            )
         st.markdown("<div style='text-align: center; margin-top: 10px;'><a href='#'>View All Activity</a></div>", unsafe_allow_html=True)
     
-    st.markdown("</div>", unsafe_allow_html=True)e)e)
-e)}</h2>', unsafe_allow_html=True)e)}</h2>', unsafe_allow_html=True)
-elif selected == "Sales Pipeline":        st.markdown('<h4>Pipeline Value</h4>', unsafe_allow_html=True)        st.markdown('<h4>Pipeline Value</h4>', unsafe_allow_html=True)
-    st.markdown('<div style="background-color: #2E7D32; color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">'kdown('</div>', unsafe_allow_html=True)kdown('</div>', unsafe_allow_html=True)
+    st.markdown("</div>", unsafe_allow_html=True)
+
+elif selected == "Sales Pipeline":
+    st.markdown('<div style="background-color: #2E7D32; color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">'
                 '<h1 style="margin: 0;">Sales Pipeline</h1>'
-                '<p style="margin: 5px 0;">Track and manage your sales opportunities</p></div>',
-                unsafe_allow_html=True)e)e)
-ize)}</h2>', unsafe_allow_html=True)ize)}</h2>', unsafe_allow_html=True)
-    # Summary metrics for the pipeline        st.markdown('<h4>Avg. Deal Size</h4>', unsafe_allow_html=True)        st.markdown('<h4>Avg. Deal Size</h4>', unsafe_allow_html=True)
-    col1, col2, col3, col4 = st.columns(4)kdown('</div>', unsafe_allow_html=True)kdown('</div>', unsafe_allow_html=True)
+                '<p style="margin: 5px 0;">Convert more leads with strategic pipeline management</p></div>',
+                unsafe_allow_html=True)
+    
+    # Summary metrics for the pipeline
+    col1, col2, col3, col4 = st.columns(4)
 
     total_deals = sum(netagrow_data["salesPipeline"]["dealCounts"])
-    total_value = sum(netagrow_data["salesPipeline"]["dealValues"])ml=True)ml=True)
-    avg_deal_size = total_value / total_deals if total_deals > 0 else 0fe_allow_html=True)fe_allow_html=True)
-    win_rate = netagrow_data["salesPipeline"]["dealCounts"][-2] / (        st.markdown('<h4>Win Rate</h4>', unsafe_allow_html=True)        st.markdown('<h4>Win Rate</h4>', unsafe_allow_html=True)
-                netagrow_data["salesPipeline"]["dealCounts"][-2] + netagrow_data["salesPipeline"]["dealCounts"][-1]) * 100, unsafe_allow_html=True), unsafe_allow_html=True)
+    total_value = sum(netagrow_data["salesPipeline"]["dealValues"])
+    avg_deal_size = total_value / total_deals if total_deals > 0 else 0
+    win_rate = netagrow_data["salesPipeline"]["dealCounts"][-2] / (
+                netagrow_data["salesPipeline"]["dealCounts"][-2] + netagrow_data["salesPipeline"]["dealCounts"][-1]) * 100
 
     with col1:
-        st.markdown('<div class="metric-card">', unsafe_allow_html=True)_allow_html=True)_allow_html=True)
+        st.markdown('<div class="metric-card">', unsafe_allow_html=True)
         st.markdown(f'<h2>{format_number(total_deals)}</h2>', unsafe_allow_html=True)
         st.markdown('<h4>Total Deals</h4>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
-  'Deal Value': netagrow_data["salesPipeline"]["dealValues"],  'Deal Value': netagrow_data["salesPipeline"]["dealValues"],
-    with col2:        'Conversion Rate': netagrow_data["salesPipeline"]["conversionRates"]        'Conversion Rate': netagrow_data["salesPipeline"]["conversionRates"]
+
+    with col2:
         st.markdown('<div class="metric-card">', unsafe_allow_html=True)
         st.markdown(f'<h2>{format_currency(total_value)}</h2>', unsafe_allow_html=True)
-        st.markdown('<h4>Pipeline Value</h4>', unsafe_allow_html=True) = st.tabs(["Pipeline by Deal Count", "Pipeline by Deal Value"]) = st.tabs(["Pipeline by Deal Count", "Pipeline by Deal Value"])
+        st.markdown('<h4>Pipeline Value</h4>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
 
-    with col3:n='h',n='h',
-        st.markdown('<div class="metric-card">', unsafe_allow_html=True)s'})s'})
-        st.markdown(f'<h2>{format_currency(avg_deal_size)}</h2>', unsafe_allow_html=True)n=dict(l=20, r=20, t=20, b=20), paper_bgcolor='rgba(0,0,0,0)',n=dict(l=20, r=20, t=20, b=20), paper_bgcolor='rgba(0,0,0,0)',
-        st.markdown('<h4>Avg. Deal Size</h4>', unsafe_allow_html=True), xaxis=dict(showgrid=True, gridcolor='rgba(0,0,0,0.1)'),, xaxis=dict(showgrid=True, gridcolor='rgba(0,0,0,0.1)'),
-        st.markdown('</div>', unsafe_allow_html=True)                          showlegend=False)                          showlegend=False)
-tly_chart(fig, use_container_width=True)tly_chart(fig, use_container_width=True)
+    with col3:
+        st.markdown('<div class="metric-card">', unsafe_allow_html=True)
+        st.markdown(f'<h2>{format_currency(avg_deal_size)}</h2>', unsafe_allow_html=True)
+        st.markdown('<h4>Avg. Deal Size</h4>', unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
+
     with col4:
         st.markdown('<div class="metric-card">', unsafe_allow_html=True)
         st.markdown(f'<h2>{win_rate:.1f}%</h2>', unsafe_allow_html=True)
         st.markdown('<h4>Win Rate</h4>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)W)'})W)'})
-n=dict(l=20, r=20, t=20, b=20), paper_bgcolor='rgba(0,0,0,0)',n=dict(l=20, r=20, t=20, b=20), paper_bgcolor='rgba(0,0,0,0)',
-    # Pipeline visualization, xaxis=dict(showgrid=True, gridcolor='rgba(0,0,0,0.1)'),, xaxis=dict(showgrid=True, gridcolor='rgba(0,0,0,0.1)'),
-    st.markdown('<h3>Sales Pipeline Overview</h3>', unsafe_allow_html=True)                          showlegend=False)                          showlegend=False)
+        st.markdown('</div>', unsafe_allow_html=True)
+
+    # Pipeline visualization
+    st.markdown('<h3>Sales Pipeline Overview</h3>', unsafe_allow_html=True)
     pipeline_df = pd.DataFrame({
         'Stage': netagrow_data["salesPipeline"]["stages"],
         'Deal Count': netagrow_data["salesPipeline"]["dealCounts"],
         'Deal Value': netagrow_data["salesPipeline"]["dealValues"],
-        'Conversion Rate': netagrow_data["salesPipeline"]["conversionRates"]rete_sequence=['#2E7D32'])rete_sequence=['#2E7D32'])
-    })bgcolor='rgba(0,0,0,0)',bgcolor='rgba(0,0,0,0)',
-, xaxis=dict(showgrid=False),, xaxis=dict(showgrid=False),
-    tab1, tab2 = st.tabs(["Pipeline by Deal Count", "Pipeline by Deal Value"])                      yaxis=dict(showgrid=True, gridcolor='rgba(0,0,0,0.1)'))                      yaxis=dict(showgrid=True, gridcolor='rgba(0,0,0,0.1)'))
+        'Conversion Rate': netagrow_data["salesPipeline"]["conversionRates"]
+    })
+
+    tab1, tab2 = st.tabs(["Pipeline by Deal Count", "Pipeline by Deal Value"])
 
     with tab1:
-        fig = px.bar(pipeline_df, y='Stage', x='Deal Count', color='Stage', text='Deal Count', orientation='h',    st.markdown('<h3>Add New Deal</h3>', unsafe_allow_html=True)    st.markdown('<h3>Add New Deal</h3>', unsafe_allow_html=True)
-                     color_discrete_sequence=px.colors.sequential.Greens, labels={'Deal Count': 'Number of Deals'}) = st.columns(2) = st.columns(2)
+        fig = px.bar(pipeline_df, y='Stage', x='Deal Count', color='Stage', text='Deal Count', orientation='h',
+                     color_discrete_sequence=px.colors.sequential.Greens, labels={'Deal Count': 'Number of Deals'})
         fig.update_layout(height=400, margin=dict(l=20, r=20, t=20, b=20), paper_bgcolor='rgba(0,0,0,0)',
                           plot_bgcolor='rgba(0,0,0,0)', xaxis=dict(showgrid=True, gridcolor='rgba(0,0,0,0.1)'),
                           showlegend=False)
-        st.plotly_chart(fig, use_container_width=True)        deal_value = st.number_input("Deal Value (ZMW)", min_value=0, step=1000)        deal_value = st.number_input("Deal Value (ZMW)", min_value=0, step=1000)
-tage = st.selectbox("Stage", netagrow_data["salesPipeline"]["stages"])tage = st.selectbox("Stage", netagrow_data["salesPipeline"]["stages"])
+        st.plotly_chart(fig, use_container_width=True)
+
     with tab2:
         fig = px.bar(pipeline_df, y='Stage', x='Deal Value', color='Stage',
                      text=[f'ZMW {v:,}' for v in pipeline_df['Deal Value']], orientation='h',
-                     color_discrete_sequence=px.colors.sequential.Greens, labels={'Deal Value': 'Deal Value (ZMW)'})        contact_name = st.text_input("Contact Name")        contact_name = st.text_input("Contact Name")
-        fig.update_layout(height=400, margin=dict(l=20, r=20, t=20, b=20), paper_bgcolor='rgba(0,0,0,0)',xpected Close Date")xpected Close Date")
+                     color_discrete_sequence=px.colors.sequential.Greens, labels={'Deal Value': 'Deal Value (ZMW)'})
+        fig.update_layout(height=400, margin=dict(l=20, r=20, t=20, b=20), paper_bgcolor='rgba(0,0,0,0)',
                           plot_bgcolor='rgba(0,0,0,0)', xaxis=dict(showgrid=True, gridcolor='rgba(0,0,0,0.1)'),
-                          showlegend=False)))
+                          showlegend=False)
         st.plotly_chart(fig, use_container_width=True)
 
-    st.markdown('<h3>Stage Conversion Rates</h3>', unsafe_allow_html=True)st.markdown("<div class='custom-card'>", unsafe_allow_html=True)st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
-    fig = px.line(pipeline_df, x='Stage', y='Conversion Rate', markers=True,low_html=True)low_html=True)
+    st.markdown('<h3>Stage Conversion Rates</h3>', unsafe_allow_html=True)
+    fig = px.line(pipeline_df, x='Stage', y='Conversion Rate', markers=True,
                   labels={'Conversion Rate': 'Conversion Rate (%)'}, color_discrete_sequence=['#2E7D32'])
-    fig.update_layout(height=300, margin=dict(l=20, r=20, t=20, b=20), paper_bgcolor='rgba(0,0,0,0)',sVelocityMetrics"]sVelocityMetrics"]
+    fig.update_layout(height=300, margin=dict(l=20, r=20, t=20, b=20), paper_bgcolor='rgba(0,0,0,0)',
                       plot_bgcolor='rgba(0,0,0,0)', xaxis=dict(showgrid=False),
-                      yaxis=dict(showgrid=True, gridcolor='rgba(0,0,0,0.1)')), col3, col4 = st.columns(4), col3, col4 = st.columns(4)
+                      yaxis=dict(showgrid=True, gridcolor='rgba(0,0,0,0.1)'))
     st.plotly_chart(fig, use_container_width=True)
 
-    st.markdown('<h3>Add New Deal</h3>', unsafe_allow_html=True)e)e)
-    col1, col2 = st.columns(2)etrics["avgDealSize"])}</h2>', unsafe_allow_html=True)etrics["avgDealSize"])}</h2>', unsafe_allow_html=True)
-st.markdown('<h4>Avg. Deal Size</h4>', unsafe_allow_html=True)st.markdown('<h4>Avg. Deal Size</h4>', unsafe_allow_html=True)
-    with col1:kdown('</div>', unsafe_allow_html=True)kdown('</div>', unsafe_allow_html=True)
+    st.markdown('<h3>Add New Deal</h3>', unsafe_allow_html=True)
+    col1, col2 = st.columns(2)
+
+    with col1:
         deal_name = st.text_input("Deal Name")
         deal_value = st.number_input("Deal Value (ZMW)", min_value=0, step=1000)
         deal_stage = st.selectbox("Stage", netagrow_data["salesPipeline"]["stages"])
-Cycle"]} days</h2>', unsafe_allow_html=True)Cycle"]} days</h2>', unsafe_allow_html=True)
-    with col2:st.markdown('<h4>Avg. Sales Cycle</h4>', unsafe_allow_html=True)st.markdown('<h4>Avg. Sales Cycle</h4>', unsafe_allow_html=True)
-        company_name = st.text_input("Company Name")kdown('</div>', unsafe_allow_html=True)kdown('</div>', unsafe_allow_html=True)
+
+    with col2:
+        company_name = st.text_input("Company Name")
         contact_name = st.text_input("Contact Name")
         expected_close = st.date_input("Expected Close Date")
-ml=True)ml=True)
-    st.button("Add Deal", key="add_deal")]}%</h2>', unsafe_allow_html=True)]}%</h2>', unsafe_allow_html=True)
-st.markdown('<h4>Win Rate</h4>', unsafe_allow_html=True)st.markdown('<h4>Win Rate</h4>', unsafe_allow_html=True)
-    # Add sales velocity metrics sectionkdown('</div>', unsafe_allow_html=True)kdown('</div>', unsafe_allow_html=True)
+
+    st.button("Add Deal", key="add_deal")
+
+    # Add sales velocity metrics section
     st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
     st.markdown("<h3>Sales Velocity Metrics</h3>", unsafe_allow_html=True)
-    e)e)
+
     velocity_metrics = netagrow_data["salesVelocityMetrics"]
-    _allow_html=True)_allow_html=True)
-    col1, col2, col3, col4 = st.columns(4)    st.tooltip = st.markdown('<div class="tooltip">ⓘ<span class="tooltiptext">Revenue generated per day: (Deal Size × Win Rate × Deals) ÷ Sales Cycle</span></div>', unsafe_allow_html=True)    st.tooltip = st.markdown('<div class="tooltip">ⓘ<span class="tooltiptext">Revenue generated per day: (Deal Size × Win Rate × Deals) ÷ Sales Cycle</span></div>', unsafe_allow_html=True)
-    rue)rue)
+
+    col1, col2, col3, col4 = st.columns(4)
+
     with col1:
-        st.markdown('<div class="metric-card">', unsafe_allow_html=True)low_html=True)low_html=True)
+        st.markdown('<div class="metric-card">', unsafe_allow_html=True)
         st.markdown(f'<h2>{format_currency(velocity_metrics["avgDealSize"])}</h2>', unsafe_allow_html=True)
         st.markdown('<h4>Avg. Deal Size</h4>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)st.markdown("<div class='custom-card'>", unsafe_allow_html=True)st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
+        st.markdown('</div>', unsafe_allow_html=True)
         
     with col2:
-        st.markdown('<div class="metric-card">', unsafe_allow_html=True) "Loss Reasons", "By Product", "By Deal Size"]) "Loss Reasons", "By Product", "By Deal Size"])
+        st.markdown('<div class="metric-card">', unsafe_allow_html=True)
         st.markdown(f'<h2>{velocity_metrics["avgSalesCycle"]} days</h2>', unsafe_allow_html=True)
-        st.markdown('<h4>Avg. Sales Cycle</h4>', unsafe_allow_html=True)ata = netagrow_data["winLossAnalysis"]ata = netagrow_data["winLossAnalysis"]
+        st.markdown('<h4>Avg. Sales Cycle</h4>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
         
     with col3:
-        st.markdown('<div class="metric-card">', unsafe_allow_html=True)  "Reason": win_loss_data["reasonsWon"].keys(),  "Reason": win_loss_data["reasonsWon"].keys(),
-        st.markdown(f'<h2>{velocity_metrics["winRate"]}%</h2>', unsafe_allow_html=True)    "Percentage": win_loss_data["reasonsWon"].values()    "Percentage": win_loss_data["reasonsWon"].values()
+        st.markdown('<div class="metric-card">', unsafe_allow_html=True)
+        st.markdown(f'<h2>{velocity_metrics["winRate"]}%</h2>', unsafe_allow_html=True)
         st.markdown('<h4>Win Rate</h4>', unsafe_allow_html=True)
         st.markdown('</div>', unsafe_allow_html=True)
         
     with col4:  
         st.markdown('<div class="metric-card">', unsafe_allow_html=True)
-        st.markdown(f'<h2>{format_currency(velocity_metrics["velocityScore"])}/day</h2>', unsafe_allow_html=True)", ", 
+        st.markdown(f'<h2>{format_currency(velocity_metrics["velocityScore"])}/day</h2>', unsafe_allow_html=True)
         st.markdown('<h4>Velocity Score</h4>', unsafe_allow_html=True)
         st.tooltip = st.markdown('<div class="tooltip">ⓘ<span class="tooltiptext">Revenue generated per day: (Deal Size × Win Rate × Deals) ÷ Sales Cycle</span></div>', unsafe_allow_html=True)
-        st.markdown('</div>', unsafe_allow_html=True)   color_discrete_sequence=['#2E7D32'],   color_discrete_sequence=['#2E7D32'],
-    on["Percentage"].apply(lambda x: f"{x}%")on["Percentage"].apply(lambda x: f"{x}%")
+        st.markdown('</div>', unsafe_allow_html=True)
+    
     st.markdown("</div>", unsafe_allow_html=True)
     
     # Add win/loss analysis section
-    st.markdown("<div class='custom-card'>", unsafe_allow_html=True) b=20), b=20),
-    st.markdown("<h3>Win/Loss Analysis</h3>", unsafe_allow_html=True)or='rgba(0,0,0,0)',or='rgba(0,0,0,0)',
+    st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
+    st.markdown("<h3>Win/Loss Analysis</h3>", unsafe_allow_html=True)
     
     tab1, tab2, tab3, tab4 = st.tabs(["Win Reasons", "Loss Reasons", "By Product", "By Deal Size"])
     
-    win_loss_data = netagrow_data["winLossAnalysis"]   showgrid=True,   showgrid=True,
-           gridcolor='rgba(0,0,0,0.1)'       gridcolor='rgba(0,0,0,0.1)'
+    win_loss_data = netagrow_data["winLossAnalysis"]
+    
     with tab1:
-        reasons_won = pd.DataFrame({    )    )
-            "Reason": win_loss_data["reasonsWon"].keys(),tly_chart(fig, use_container_width=True)tly_chart(fig, use_container_width=True)
+        reasons_won = pd.DataFrame({
+            "Reason": win_loss_data["reasonsWon"].keys(),
             "Percentage": win_loss_data["reasonsWon"].values()
         })
         
-        fig = px.bar(  "Reason": win_loss_data["reasonsLost"].keys(),  "Reason": win_loss_data["reasonsLost"].keys(),
-            reasons_won,     "Percentage": win_loss_data["reasonsLost"].values()    "Percentage": win_loss_data["reasonsLost"].values()
+        fig = px.bar(
+            reasons_won, 
             x="Percentage", 
             y="Reason", 
             orientation='h',
-            title="",, , 
+            title="",
             color_discrete_sequence=['#2E7D32'],
-            text=reasons_won["Percentage"].apply(lambda x: f"{x}%")", ", 
+            text=reasons_won["Percentage"].apply(lambda x: f"{x}%")
         )
         fig.update_layout(
-            height=300,   color_discrete_sequence=['#C62828'],   color_discrete_sequence=['#C62828'],
-            margin=dict(l=20, r=20, t=20, b=20),ost["Percentage"].apply(lambda x: f"{x}%")ost["Percentage"].apply(lambda x: f"{x}%")
+            height=300,
+            margin=dict(l=20, r=20, t=20, b=20),
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
             xaxis=dict(
-                title="Percentage of Wins", b=20), b=20),
-                showgrid=True,or='rgba(0,0,0,0)',or='rgba(0,0,0,0)',
+                title="Percentage of Wins",
+                showgrid=True,
                 gridcolor='rgba(0,0,0,0.1)'
             )
-        )",",
-        st.plotly_chart(fig, use_container_width=True)   showgrid=True,   showgrid=True,
-           gridcolor='rgba(0,0,0,0.1)'       gridcolor='rgba(0,0,0,0.1)'
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    
     with tab2:
-        reasons_lost = pd.DataFrame({    )    )
-            "Reason": win_loss_data["reasonsLost"].keys(),tly_chart(fig, use_container_width=True)tly_chart(fig, use_container_width=True)
+        reasons_lost = pd.DataFrame({
+            "Reason": win_loss_data["reasonsLost"].keys(),
             "Percentage": win_loss_data["reasonsLost"].values()
         })
         
         fig = px.bar(
             reasons_lost, 
-            x="Percentage",   {"Product": product, "Status": "Won", "Percentage": data["won"]},  {"Product": product, "Status": "Won", "Percentage": data["won"]},
-            y="Reason",         {"Product": product, "Status": "Lost", "Percentage": data["lost"]}        {"Product": product, "Status": "Lost", "Percentage": data["lost"]}
+            x="Percentage", 
+            y="Reason", 
             orientation='h',
             title="",
-            color_discrete_sequence=['#C62828'], = pd.DataFrame(by_product_data) = pd.DataFrame(by_product_data)
+            color_discrete_sequence=['#C62828'],
             text=reasons_lost["Percentage"].apply(lambda x: f"{x}%")
         )
         fig.update_layout(
@@ -1554,168 +1642,161 @@ st.markdown('<h4>Win Rate</h4>', unsafe_allow_html=True)st.markdown('<h4>Win Rat
             margin=dict(l=20, r=20, t=20, b=20),
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
-            xaxis=dict(   color_discrete_map={"Won": "#2E7D32", "Lost": "#C62828"},   color_discrete_map={"Won": "#2E7D32", "Lost": "#C62828"},
-                title="Percentage of Losses",t_df["Percentage"].apply(lambda x: f"{x}%")t_df["Percentage"].apply(lambda x: f"{x}%")
+            xaxis=dict(
+                title="Percentage of Losses",
                 showgrid=True,
                 gridcolor='rgba(0,0,0,0.1)'
             )
-        ) b=20), b=20),
-        st.plotly_chart(fig, use_container_width=True))',)',
-    r='rgba(0,0,0,0)',r='rgba(0,0,0,0)',
-    with tab3:se),se),
+        )
+        st.plotly_chart(fig, use_container_width=True)
+    
+    with tab3:
         by_product_data = []
         for product, data in win_loss_data["byProduct"].items():
-            by_product_data.extend([   showgrid=True,   showgrid=True,
-                {"Product": product, "Status": "Won", "Percentage": data["won"]},       gridcolor='rgba(0,0,0,0.1)'       gridcolor='rgba(0,0,0,0.1)'
+            by_product_data.extend([
+                {"Product": product, "Status": "Won", "Percentage": data["won"]},
                 {"Product": product, "Status": "Lost", "Percentage": data["lost"]}
-            ])    )    )
-        tly_chart(fig, use_container_width=True)tly_chart(fig, use_container_width=True)
+            ])
         by_product_df = pd.DataFrame(by_product_data)
         
         fig = px.bar(
             by_product_df,
             x="Product",
-            y="Percentage",  {"Deal Size": size, "Status": "Won", "Percentage": data["won"]},  {"Deal Size": size, "Status": "Won", "Percentage": data["won"]},
-            color="Status",        {"Deal Size": size, "Status": "Lost", "Percentage": data["lost"]}        {"Deal Size": size, "Status": "Lost", "Percentage": data["lost"]}
+            y="Percentage",
+            color="Status",
             barmode="group",
             color_discrete_map={"Won": "#2E7D32", "Lost": "#C62828"},
-            text=by_product_df["Percentage"].apply(lambda x: f"{x}%")df = pd.DataFrame(by_deal_size_data)df = pd.DataFrame(by_deal_size_data)
+            text=by_product_df["Percentage"].apply(lambda x: f"{x}%")
         )
         fig.update_layout(
-            height=300,,,
+            height=300,
             margin=dict(l=20, r=20, t=20, b=20),
             paper_bgcolor='rgba(0,0,0,0)',
             plot_bgcolor='rgba(0,0,0,0)',
             xaxis=dict(showgrid=False),
             yaxis=dict(
-                title="Percentage",   text=by_deal_size_df["Percentage"].apply(lambda x: f"{x}%"),   text=by_deal_size_df["Percentage"].apply(lambda x: f"{x}%"),
-                showgrid=True,s={"Deal Size": ["Small (<ZMW 10K)", "Medium (ZMW 10-50K)", "Large (>ZMW 50K)"]}s={"Deal Size": ["Small (<ZMW 10K)", "Medium (ZMW 10-50K)", "Large (>ZMW 50K)"]}
+                title="Percentage",
+                showgrid=True,
                 gridcolor='rgba(0,0,0,0.1)'
-            )
-        )
-        st.plotly_chart(fig, use_container_width=True) b=20), b=20),
-    )',)',
-    with tab4:r='rgba(0,0,0,0)',r='rgba(0,0,0,0)',
-        by_deal_size_data = []se),se),
-        for size, data in win_loss_data["byDealSize"].items():
-            by_deal_size_data.extend([
-                {"Deal Size": size, "Status": "Won", "Percentage": data["won"]},   showgrid=True,   showgrid=True,
-                {"Deal Size": size, "Status": "Lost", "Percentage": data["lost"]}       gridcolor='rgba(0,0,0,0.1)'       gridcolor='rgba(0,0,0,0.1)'
-            ])
-            )    )
-        by_deal_size_df = pd.DataFrame(by_deal_size_data)True)True)
-        
-        fig = px.bar(tml=True)tml=True)
-            by_deal_size_df,
-            x="Deal Size",
-            y="Percentage",st.markdown("<div class='custom-card'>", unsafe_allow_html=True)st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
-            color="Status",3>Pipeline Management</h3>", unsafe_allow_html=True)3>Pipeline Management</h3>", unsafe_allow_html=True)
-            barmode="group",
-            color_discrete_map={"Won": "#2E7D32", "Lost": "#C62828"},
-            text=by_deal_size_df["Percentage"].apply(lambda x: f"{x}%"),
-            category_orders={"Deal Size": ["Small (<ZMW 10K)", "Medium (ZMW 10-50K)", "Large (>ZMW 50K)"]}>🔄 Drag and drop functionality requires additional JavaScript integration. In a full implementation, >🔄 Drag and drop functionality requires additional JavaScript integration. In a full implementation, 
-        )g deals between pipeline stages, with state updates managed by the backend.</p>g deals between pipeline stages, with state updates managed by the backend.</p>
-        fig.update_layout(</div></div>
-            height=300,
-            margin=dict(l=20, r=20, t=20, b=20),
-            paper_bgcolor='rgba(0,0,0,0)',    # Create columns for each pipeline stage    # Create columns for each pipeline stage
-            plot_bgcolor='rgba(0,0,0,0)',tagrow_data["salesPipeline"]["stages"]))tagrow_data["salesPipeline"]["stages"]))
-            xaxis=dict(showgrid=False),
-            yaxis=dict(
-                title="Percentage",us: 10px; margin-bottom: 20px;">'us: 10px; margin-bottom: 20px;">'
-                showgrid=True,>Contact Management</h1>'>Contact Management</h1>'
-                gridcolor='rgba(0,0,0,0.1)'                '<p style="margin: 5px 0;">Manage your customer and partner contacts</p></div>',                '<p style="margin: 5px 0;">Manage your customer and partner contacts</p></div>',
             )
         )
         st.plotly_chart(fig, use_container_width=True)
     
-    st.markdown("</div>", unsafe_allow_html=True) border-collapse: collapse;'>" border-collapse: collapse;'>"
+    with tab4:
+        by_deal_size_data = []
+        for size, data in win_loss_data["byDealSize"].items():
+            by_deal_size_data.extend([
+                {"Deal Size": size, "Status": "Won", "Percentage": data["won"]},
+                {"Deal Size": size, "Status": "Lost", "Percentage": data["lost"]}
+            ])
+        by_deal_size_df = pd.DataFrame(by_deal_size_data)
+        
+        fig = px.bar(
+            by_deal_size_df,
+            x="Deal Size",
+            y="Percentage",
+            color="Status",
+            barmode="group",
+            color_discrete_map={"Won": "#2E7D32", "Lost": "#C62828"},
+            text=by_deal_size_df["Percentage"].apply(lambda x: f"{x}%"),
+            category_orders={"Deal Size": ["Small (<ZMW 10K)", "Medium (ZMW 10-50K)", "Large (>ZMW 50K)"]}
+        )
+        fig.update_layout(
+            height=300,
+            margin=dict(l=20, r=20, t=20, b=20),
+            paper_bgcolor='rgba(0,0,0,0)',
+            plot_bgcolor='rgba(0,0,0,0)',
+            xaxis=dict(showgrid=False),
+            yaxis=dict(
+                title="Percentage",
+                showgrid=True,
+                gridcolor='rgba(0,0,0,0.1)'
+            )
+        )
+        st.plotly_chart(fig, use_container_width=True)
     
-    # Add drag-and-drop pipeline section_df.iterrows():_df.iterrows():
-    st.markdown("<div class='custom-card'>", unsafe_allow_html=True)td><td>{contact['company']}</td><td>{contact['location']}</td><td>{contact['email']}</td><td>{contact['phone']}</td></tr>"td><td>{contact['company']}</td><td>{contact['location']}</td><td>{contact['email']}</td><td>{contact['phone']}</td></tr>"
-    st.markdown("<h3>Pipeline Management</h3>", unsafe_allow_html=True)    contact_html += "</table>"    contact_html += "</table>"
+    st.markdown("</div>", unsafe_allow_html=True)
     
-    st.markdown("""
-    <div style="background-color: #f9f9f9; padding: 10px; border-radius: 5px; margin-bottom: 20px;">ntact", key="add_new_contact")ntact", key="add_new_contact")
-        <p>🔄 Drag and drop functionality requires additional JavaScript integration. In a full implementation, 
-        you would be able to drag deals between pipeline stages, with state updates managed by the backend.</p>
-    </div>rder-radius: 10px; margin-bottom: 20px;">'rder-radius: 10px; margin-bottom: 20px;">'
-    """, unsafe_allow_html=True)>Task Management</h1>'>Task Management</h1>'
-                    '<p style="margin: 5px 0;">Manage your tasks and activities</p></div>',                '<p style="margin: 5px 0;">Manage your tasks and activities</p></div>',
+    # Add drag-and-drop pipeline section
+    st.markdown("<div class='custom-card'>", unsafe_allow_html=True)
+    st.markdown("<h3>Pipeline Management</h3>", unsafe_allow_html=True)
+    
+    # st.markdown("""
+    # <div style="background-color: #f9f9f9; padding: 10px; border-radius: 5px; margin-bottom: 20px;">
+    #     <p>🔄 Drag and drop functionality requires additional JavaScript integration. In a full implementation,
+    #     you would be able to drag deals between pipeline stages, with state updates managed by the backend.</p>
+    # </div>
+    # """, unsafe_allow_html=True)
+
     # Create columns for each pipeline stage
     cols = st.columns(len(netagrow_data["salesPipeline"]["stages"]))
 
-elif selected == "Contacts":0%; border-collapse: collapse;'>"0%; border-collapse: collapse;'>"
-    st.markdown('<div style="background-color: #2E7D32; color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">'<th>Status</th><th>Due Date</th></tr>"<th>Status</th><th>Due Date</th></tr>"
+elif selected == "Contacts":
+    st.markdown('<div style="background-color: #2E7D32; color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">'
                 '<h1 style="margin: 0;">Contact Management</h1>'
-                '<p style="margin: 5px 0;">Manage your customer and partner contacts</p></div>',
-                unsafe_allow_html=True) class='{status_class}'>{task['status']}</td>" class='{status_class}'>{task['status']}</td>"
-<td>{task['assignedTo']}</td>{status_html}<td>{task['dueDate']}</td></tr>"<td>{task['assignedTo']}</td>{status_html}<td>{task['dueDate']}</td></tr>"
-    st.markdown('<h3>Contact List</h3>', unsafe_allow_html=True)    task_html += "</table>"    task_html += "</table>"
-    contacts_df = pd.DataFrame(netagrow_data["contactManagement"]["contacts"])))
+                '<p style="margin: 5px 0;">Build stronger relationships with your agricultural network</p></div>',
+                unsafe_allow_html=True)
+    
+    st.markdown('<h3>Contact List</h3>', unsafe_allow_html=True)
+    contacts_df = pd.DataFrame(netagrow_data["contactManagement"]["contacts"])
     contact_html = "<table style='width:100%; border-collapse: collapse;'>"
-    contact_html += "<tr><th>Name</th><th>Company</th><th>Location</th><th>Email</th><th>Phone</th></tr>" key="add_new_task") key="add_new_task")
+    contact_html += "<tr><th>Name</th><th>Company</th><th>Location</th><th>Email</th><th>Phone</th></tr>"
     for _, contact in contacts_df.iterrows():
         contact_html += f"<tr><td>{contact['name']}</td><td>{contact['company']}</td><td>{contact['location']}</td><td>{contact['email']}</td><td>{contact['phone']}</td></tr>"
-    contact_html += "</table>"order-radius: 10px; margin-bottom: 20px;">'order-radius: 10px; margin-bottom: 20px;">'
-    st.markdown(contact_html, unsafe_allow_html=True)>Campaign Management</h1>'>Campaign Management</h1>'
-                '<p style="margin: 5px 0;">Manage your marketing campaigns</p></div>',                '<p style="margin: 5px 0;">Manage your marketing campaigns</p></div>',
+    contact_html += "</table>"
+    st.markdown(contact_html, unsafe_allow_html=True)
+
     st.button("Add New Contact", key="add_new_contact")
 
 elif selected == "Tasks":
-    st.markdown('<div style="background-color: #2E7D32; color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">'border-collapse: collapse;'>"border-collapse: collapse;'>"
-                '<h1 style="margin: 0;">Task Management</h1>'/th><th>Target Audience</th></tr>"/th><th>Target Audience</th></tr>"
-                '<p style="margin: 5px 0;">Manage your tasks and activities</p></div>',
+    st.markdown('<div style="background-color: #2E7D32; color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">'
+                '<h1 style="margin: 0;">Task Management</h1>'
+                '<p style="margin: 5px 0;">Prioritize activities and boost team productivity</p></div>',
                 unsafe_allow_html=True)
-ss='{status_class}'>{campaign['status']}</td>"ss='{status_class}'>{campaign['status']}</td>"
-    tasks_df = pd.DataFrame(netagrow_data["taskActivityTracking"]["activities"])/td>{status_html}<td>{campaign['targetAudience']}</td></tr>"/td>{status_html}<td>{campaign['targetAudience']}</td></tr>"
-    task_html = "<table style='width:100%; border-collapse: collapse;'>"    campaign_html += "</table>"    campaign_html += "</table>"
+
+    tasks_df = pd.DataFrame(netagrow_data["taskActivityTracking"]["activities"])
+    task_html = "<table style='width:100%; border-collapse: collapse;'>"
     task_html += "<tr><th>Task</th><th>Assigned To</th><th>Status</th><th>Due Date</th></tr>"
     for _, task in tasks_df.iterrows():
-        status_class = get_status_class(task["status"])ign", key="add_new_campaign")ign", key="add_new_campaign")
+        status_class = get_status_class(task["status"])
         status_html = f"<td class='{status_class}'>{task['status']}</td>"
         task_html += f"<tr><td>{task['task']}</td><td>{task['assignedTo']}</td>{status_html}<td>{task['dueDate']}</td></tr>"
-    task_html += "</table>"x; border-radius: 10px; margin-bottom: 20px;">'x; border-radius: 10px; margin-bottom: 20px;">'
-    st.markdown(task_html, unsafe_allow_html=True)>Settings</h1>'>Settings</h1>'
-                '<p style="margin: 5px 0;">Configure your CRM settings</p></div>',                '<p style="margin: 5px 0;">Configure your CRM settings</p></div>',
+    task_html += "</table>"
+    st.markdown(task_html, unsafe_allow_html=True)
     st.button("Add New Task", key="add_new_task")
 
-elif selected == "Campaigns":Settings</h3>', unsafe_allow_html=True)Settings</h3>', unsafe_allow_html=True)
+elif selected == "Campaigns":
     st.markdown('<div style="background-color: #2E7D32; color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">'
-                '<h1 style="margin: 0;">Campaign Management</h1>'    st.text_input("Email")    st.text_input("Email")
-                '<p style="margin: 5px 0;">Manage your marketing campaigns</p></div>',
+                '<h1 style="margin: 0;">Campaign Management</h1>'
+                '<p style="margin: 5px 0;">Drive engagement with targeted agricultural marketing</p></div>',
                 unsafe_allow_html=True)
-3>', unsafe_allow_html=True)3>', unsafe_allow_html=True)
-    campaigns_df = pd.DataFrame(netagrow_data["salesMarketingTools"]["activeCampaigns"])ish", "French", "Spanish"])ish", "French", "Spanish"])
-    campaign_html = "<table style='width:100%; border-collapse: collapse;'>"    st.checkbox("Enable Notifications")    st.checkbox("Enable Notifications")
+
+    campaigns_df = pd.DataFrame(netagrow_data["salesMarketingTools"]["activeCampaigns"])
+    campaign_html = "<table style='width:100%; border-collapse: collapse;'>"
     campaign_html += "<tr><th>Campaign Name</th><th>Status</th><th>Target Audience</th></tr>"
     for _, campaign in campaigns_df.iterrows():
+        status_class = get_status_class(campaign["status"])
+        status_html = f"<td class='{status_class}'>{campaign['status']}</td>"
+        campaign_html += f"<tr><td>{campaign['name']}</td>{status_html}<td>{campaign['targetAudience']}</td></tr>"
+    campaign_html += "</table>"
+    st.markdown(campaign_html, unsafe_allow_html=True)
 
+    st.button("Add New Campaign", key="add_new_campaign")
 
+elif selected == "Settings":
+    st.markdown('<div style="background-color: #2E7D32; color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">'
+                '<h1 style="margin: 0;">Settings</h1>'
+                '<p style="margin: 5px 0;">Customize your Netagrow experience</p></div>',
+                unsafe_allow_html=True)
 
+    st.markdown('<h3>User Settings</h3>', unsafe_allow_html=True)
+    st.text_input("Username")
+    st.text_input("Email")
+    st.text_input("Password", type="password")
+    
+    st.markdown('<h3>System Settings</h3>', unsafe_allow_html=True)
+    st.checkbox("Enable Dark Mode")
+    st.checkbox("Enable Notifications")
+    st.selectbox("Language", ["English", "French", "Spanish"])
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    st.button("Save Settings", key="save_settings")    st.checkbox("Enable Dark Mode")    st.checkbox("Enable Notifications")    st.selectbox("Language", ["English", "French", "Spanish"])    st.markdown('<h3>System Settings</h3>', unsafe_allow_html=True)    st.text_input("Password", type="password")    st.text_input("Email")    st.text_input("Username")    st.markdown('<h3>User Settings</h3>', unsafe_allow_html=True)                unsafe_allow_html=True)                '<p style="margin: 5px 0;">Configure your CRM settings</p></div>',                '<h1 style="margin: 0;">Settings</h1>'    st.markdown('<div style="background-color: #2E7D32; color: white; padding: 20px; border-radius: 10px; margin-bottom: 20px;">'elif selected == "Settings":    st.button("Add New Campaign", key="add_new_campaign")    st.markdown(campaign_html, unsafe_allow_html=True)    campaign_html += "</table>"        campaign_html += f"<tr><td>{campaign['name']}</td>{status_html}<td>{campaign['targetAudience']}</td></tr>"        status_html = f"<td class='{status_class}'>{campaign['status']}</td>"        status_class = get_status_class(campaign["status"])
-
-    st.button("Save Settings", key="save_settings")    st.button("Save Settings", key="save_settings")
+    st.button("Save Settings", key="save_settings")
